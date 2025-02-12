@@ -1,20 +1,14 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { initializeApp } from "firebase/app";
-import { getFirestore, getDoc, addDoc } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getAuth, signOut } from "firebase/auth";
+
+import Landing from "./components/landing";
+import Products from "./components/products/products";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // Import the functions you need from the SDKs you need
-
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  const [user, setUser] = useState(null);
 
   // Your web app's Firebase configuration
   const firebaseConfig = {
@@ -32,56 +26,18 @@ function App() {
   const db = getFirestore(app);
   const auth = getAuth(app);
 
-  const signUp = async () => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-      console.log(user);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <input
-        type="text"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      {/* <button onClick={signUp} disabled={!email || !password}>
-        Sign Up
-      </button> */}
-    </>
+    <div>
+      {!user && <Landing auth={auth} db={db} setUser={setUser} />}
+      {!!user && (
+        <>
+          <div>
+            <h1>Welcome, {user.email}</h1>
+            <Products db={db} uid={user?.uid} />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
