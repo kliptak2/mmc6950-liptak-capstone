@@ -2,7 +2,12 @@ import { useState } from "react";
 import "./App.css";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signOut } from "firebase/auth";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged,
+} from "firebase/auth";
 
 import Landing from "./components/landing";
 import Products from "./components/products/products";
@@ -25,6 +30,11 @@ function App() {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence);
+
+  onAuthStateChanged(auth, (user) => {
+    setUser(user);
+  });
 
   return (
     <div>
