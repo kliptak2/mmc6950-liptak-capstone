@@ -1,7 +1,9 @@
 import { useState } from "react";
 import CreateableSelect from "react-select/creatable";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const AddProductForm = ({ addProduct, availableTags }) => {
+  const [files, setFiles] = useState([]);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
@@ -13,6 +15,7 @@ const AddProductForm = ({ addProduct, availableTags }) => {
     e.preventDefault();
 
     addProduct({
+      files,
       name,
       notes,
       purchaseDate,
@@ -21,12 +24,13 @@ const AddProductForm = ({ addProduct, availableTags }) => {
       warrantyLengthUnit,
     });
 
-    setName("");
-    setNotes("");
-    setPurchaseDate("");
-    setTags([]);
-    setWarrantyLength("");
-    setWarrantyLengthUnit("");
+    // setFiles([]);
+    // setName("");
+    // setNotes("");
+    // setPurchaseDate("");
+    // setTags([]);
+    // setWarrantyLength("");
+    // setWarrantyLengthUnit("");
   };
 
   return (
@@ -94,6 +98,42 @@ const AddProductForm = ({ addProduct, availableTags }) => {
             setTags(tags.map((tag) => tag.value));
           }}
         />
+        <label htmlFor="files">Add Images or Files</label>
+        <input
+          type="file"
+          name="files"
+          multiple
+          onChange={(e) => {
+            console.log(e.target.files);
+            if (!e.target.files || !e.target.files.length) {
+              return;
+            }
+
+            setFiles(...files, Array.from(e.target.files));
+          }}
+        />
+        {files.map((file) => (
+          <div
+            key={file.name}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              backgroundColor: "#f4efee",
+              margin: "0.25rem 0",
+            }}
+          >
+            <p style={{ textAlign: "left", width: "fit-content" }}>
+              {file.name}
+            </p>
+            <button
+              onClick={() => setFiles(files.filter((f) => f !== file))}
+              style={{ backgroundColor: "transparent", border: "none" }}
+            >
+              <DeleteIcon />
+            </button>
+          </div>
+        ))}
         <button type="submit">Add Product</button>
       </form>
     </div>

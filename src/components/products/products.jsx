@@ -10,11 +10,12 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
 import EditProductForm from "./edit-product-form";
 import AddProductForm from "./add-product";
 import Select from "react-select";
 
-const Products = ({ db, uid }) => {
+const Products = ({ db, storage, uid }) => {
   const [allTags, setAllTags] = useState([]);
   const [productsMaster, setProductsMaster] = useState([]);
   const [products, setProducts] = useState([]);
@@ -25,6 +26,8 @@ const Products = ({ db, uid }) => {
   const sortOptions = [
     { value: "createdAtDesc", label: "Newest First" },
     { value: "createdAtAsc", label: "Oldest First" },
+    { value: "nameAsc", label: "Name A-Z" },
+    { value: "nameDesc", label: "Name Z-A" },
   ];
 
   useEffect(() => {
@@ -58,9 +61,20 @@ const Products = ({ db, uid }) => {
   const addProduct = async (productData) => {
     console.log(productData);
 
+    const fileIds = await Promise.all(
+      productData.files.map(async (file) => {
+        const storageRef = ref(storage, `${uid}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        return file.name;
+      })
+    );
+
+    console.log(fileIds);
+
     // Add a new document with a generated id.
     await addDoc(collection(db, `users/${uid}/products`), {
       ...productData,
+      files: fileIds,
       createdAt: serverTimestamp(),
     });
   };
@@ -96,6 +110,44 @@ const Products = ({ db, uid }) => {
     }
   };
 
+  const handleSortChange = (selectedOption) => {
+    console.log(selectedOption);
+    console.log(products);
+    setSortOption(selectedOption.value);
+
+    let sortedProducts = [];
+
+    switch (selectedOption.value) {
+      case "createdAtDesc":
+        sortedProducts = products.sort((a, b) => {
+          return b.createdAt.toMillis() - a.createdAt.toMillis();
+        });
+        break;
+      case "createdAtAsc":
+        sortedProducts = products.sort((a, b) => {
+          return a.createdAt.toMillis() - b.createdAt.toMillis();
+        });
+        break;
+      case "nameAsc":
+        sortedProducts = products.sort((a, b) => {
+          return a.name.localeCompare(b.name);
+        });
+        break;
+      case "nameDesc":
+        sortedProducts = products.sort((a, b) => {
+          return b.name.localeCompare(a.name);
+        });
+        break;
+      default:
+        sortedProducts = products.sort((a, b) => {
+          return b.createdAt.toMillis() - a.createdAt.toMillis();
+        });
+        break;
+    }
+
+    setProducts(sortedProducts);
+  };
+
   return (
     <div>
       <h2>Products</h2>
@@ -110,24 +162,7 @@ const Products = ({ db, uid }) => {
           <Select
             name="sort"
             options={sortOptions}
-            onChange={(selectedOption) => {
-              console.log(selectedOption);
-              console.log(products);
-              setSortOption(selectedOption.value);
-              const sortedProducts = products.sort((a, b) => {
-                console.log(a.createdAt.seconds, b.createdAt.seconds);
-                if (selectedOption.value === "createdAtDesc") {
-                  return b.createdAt.toMillis() - a.createdAt.toMillis();
-                } else {
-                  return a.createdAt.toMillis() - b.createdAt.toMillis();
-                }
-              });
-
-              console.log(
-                sortedProducts.map((product) => product.createdAt.toDate())
-              );
-              setProducts(sortedProducts);
-            }}
+            onChange={handleSortChange}
             value={sortOptions.find((option) => option.value === sortOption)}
           />
           <button

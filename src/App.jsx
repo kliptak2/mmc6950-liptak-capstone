@@ -8,7 +8,7 @@ import {
   browserLocalPersistence,
   onAuthStateChanged,
 } from "firebase/auth";
-
+import { getStorage } from "firebase/storage";
 import Landing from "./components/landing";
 import Products from "./components/products/products";
 
@@ -31,6 +31,7 @@ function App() {
   const db = getFirestore(app);
   const auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence);
+  const storage = getStorage(app);
 
   onAuthStateChanged(auth, (user) => {
     setUser(user);
@@ -43,7 +44,7 @@ function App() {
         <>
           <div>
             <h1>Welcome, {user.email}</h1>
-            <Products db={db} uid={user?.uid} />
+            <Products db={db} storage={storage} uid={user?.uid} />
           </div>
         </>
       )}
