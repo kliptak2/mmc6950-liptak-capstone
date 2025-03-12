@@ -1,8 +1,20 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import CreateableSelect from "react-select/creatable";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { FirebaseContext } from "../../context/context";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
+import useSystemStore from "../../state/system";
+import useUserStore from "../../state/user";
 
-const AddProductForm = ({ addProduct, availableTags }) => {
+const AddProductForm = ({ availableTags }) => {
+  const { db, storage } = useContext(FirebaseContext);
+
+  const setModalOpen = useSystemStore((state) => state.setModalOpen);
+  const setModalContent = useSystemStore((state) => state.setModalContent);
+
+  const user = useUserStore((state) => state.user);
+
   const [files, setFiles] = useState([]);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
@@ -11,11 +23,22 @@ const AddProductForm = ({ addProduct, availableTags }) => {
   const [warrantyLength, setWarrantyLength] = useState("");
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    addProduct({
-      files,
+    console.log("submitting");
+
+    const fileNames = await Promise.all(
+      files.map(async (file) => {
+        const storageRef = ref(storage, `${user.uid}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        return file.name;
+      })
+    );
+
+    const docRef = await addDoc(collection(db, `users/${user.uid}/products`), {
+      createdAt: serverTimestamp(),
+      files: fileNames,
       name,
       notes,
       purchaseDate,
@@ -24,23 +47,20 @@ const AddProductForm = ({ addProduct, availableTags }) => {
       warrantyLengthUnit,
     });
 
-    // setFiles([]);
-    // setName("");
-    // setNotes("");
-    // setPurchaseDate("");
-    // setTags([]);
-    // setWarrantyLength("");
-    // setWarrantyLengthUnit("");
+    console.log("Document written with ID: ", docRef.id);
+
+    setModalOpen(false);
+    setModalContent({ component: "", params: null });
   };
 
   return (
-    <div style={{ border: "1px solid black", padding: "0.25rem" }}>
+    <div>
       <h3>Add Product</h3>
       <form
         style={{
           display: "flex",
           flexDirection: "column",
-          width: "300px",
+          width: "600px",
           alignItems: "flex-start",
         }}
         onSubmit={handleSubmit}
@@ -134,7 +154,14 @@ const AddProductForm = ({ addProduct, availableTags }) => {
             </button>
           </div>
         ))}
-        <button type="submit">Add Product</button>
+        <button
+          style={{
+            margin: "1rem auto",
+          }}
+          type="submit"
+        >
+          Add Product
+        </button>
       </form>
     </div>
   );

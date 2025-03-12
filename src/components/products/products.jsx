@@ -1,26 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   collection,
   onSnapshot,
-  addDoc,
-  updateDoc,
   deleteDoc,
   doc,
-  serverTimestamp,
   query,
   orderBy,
 } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
-import EditProductForm from "./edit-product-form";
-import AddProductForm from "./add-product";
+import { ref, deleteObject } from "firebase/storage";
 import Select from "react-select";
+import { FirebaseContext } from "../../context/context";
+import useUserStore from "../../state/user";
+import useSystemStore from "../../state/system";
+import { isEqual } from "lodash";
+import { DateTime } from "luxon";
 
-const Products = ({ db, storage, uid }) => {
+const Products = () => {
+  const { db, storage } = useContext(FirebaseContext);
+
+  const setModalOpen = useSystemStore((state) => state.setModalOpen);
+  const setModalContent = useSystemStore((state) => state.setModalContent);
+
+  const products = useUserStore((state) => state.products);
+  const setProducts = useUserStore((state) => state.setProducts);
+  const user = useUserStore((state) => state.user);
+
   const [allTags, setAllTags] = useState([]);
-  const [productsMaster, setProductsMaster] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [prodToEdit, setProdToEdit] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [localProducts, setLocalProducts] = useState([]);
   const [sortOption, setSortOption] = useState("createdAtDesc");
 
   const sortOptions = [
@@ -33,23 +39,88 @@ const Products = ({ db, storage, uid }) => {
   useEffect(() => {
     const unsubscribeProducts = onSnapshot(
       query(
-        collection(db, `users/${uid}/products`),
+        collection(db, `users/${user.uid}/products`),
         orderBy("createdAt", "desc")
       ),
       (snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          console.log(doc.data().createdAt.toDate());
-        });
-        setProducts(
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        );
-        setProductsMaster(
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        );
+        console.log("snapshot");
+        // If the products are the same, don't update the state
+        // This is to prevent infinite render loops
+        if (
+          products.length === snapshot.docs.length &&
+          products.every((product) => {
+            const existingDoc = snapshot.docs.find(
+              (doc) => doc.id === product.id
+            );
 
-        const tags = snapshot.docs.flatMap((doc) => doc.data().tags || []);
+            if (!existingDoc) {
+              return false;
+            }
 
-        setAllTags([...new Set(tags)].sort());
+            return isEqual(product, {
+              id: existingDoc.id,
+              ...existingDoc.data(),
+            });
+          })
+        ) {
+          setLocalProducts(products);
+          setAllTags(
+            products.reduce((acc, product) => {
+              product.tags?.forEach((tag) => {
+                if (!acc.includes(tag)) {
+                  acc.push(tag);
+                }
+              });
+              return acc;
+            }, [])
+          );
+          return;
+        }
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        switch (sortOption) {
+          case "createdAtDesc":
+            setLocalProducts(
+              data.sort(
+                (a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()
+              )
+            );
+            break;
+          case "createdAtAsc":
+            setLocalProducts(
+              data.sort(
+                (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
+              )
+            );
+            break;
+          case "nameAsc":
+            setLocalProducts(data.sort((a, b) => a.name.localeCompare(b.name)));
+            break;
+          case "nameDesc":
+            setLocalProducts(data.sort((a, b) => b.name.localeCompare(a.name)));
+            break;
+          default:
+            setLocalProducts(data);
+        }
+
+        setProducts(data);
+
+        const allTags = data.reduce((acc, product) => {
+          product.tags?.forEach((tag) => {
+            if (!acc.includes(tag)) {
+              acc.push(tag);
+            }
+          });
+          return acc;
+        }, []);
+
+        console.log(allTags);
+
+        setAllTags(allTags);
       }
     );
 
@@ -58,99 +129,135 @@ const Products = ({ db, storage, uid }) => {
     };
   }, []);
 
-  const addProduct = async (productData) => {
-    console.log(productData);
-
-    const fileIds = await Promise.all(
-      productData.files.map(async (file) => {
-        const storageRef = ref(storage, `${uid}/${file.name}`);
-        await uploadBytes(storageRef, file);
-        return file.name;
-      })
-    );
-
-    console.log(fileIds);
-
-    // Add a new document with a generated id.
-    await addDoc(collection(db, `users/${uid}/products`), {
-      ...productData,
-      files: fileIds,
-      createdAt: serverTimestamp(),
-    });
-  };
-
-  const editProduct = async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-    const productData = Object.fromEntries(formData.entries());
-    console.log(productData);
-
-    // Add a new document with a generated id.
-    await updateDoc(
-      doc(db, `users/${uid}/products/${prodToEdit.id}`),
-      productData
-    );
-
-    setProdToEdit(null);
-  };
-
   const searchProducts = (searchTerm) => {
-    for (let i = 0; i < 5; i++) {
-      console.log(productsMaster[i].name);
-    }
+    const filteredLocalProducts = [...products].filter((product) => {
+      return product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
-    if (searchTerm) {
-      const filteredProducts = productsMaster.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setProducts(filteredProducts);
-    } else {
-      setProducts(productsMaster);
+    switch (sortOption) {
+      case "createdAtDesc":
+        setLocalProducts(
+          filteredLocalProducts.sort(
+            (a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()
+          )
+        );
+        break;
+      case "createdAtAsc":
+        setLocalProducts(
+          filteredLocalProducts.sort(
+            (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
+          )
+        );
+        break;
+      case "nameAsc":
+        setLocalProducts(
+          filteredLocalProducts.sort((a, b) => a.name.localeCompare(b.name))
+        );
+        break;
+      case "nameDesc":
+        setLocalProducts(
+          filteredLocalProducts.sort((a, b) => b.name.localeCompare(a.name))
+        );
+        break;
+      default:
+        setLocalProducts([...filteredLocalProducts]);
     }
   };
 
   const handleSortChange = (selectedOption) => {
     console.log(selectedOption);
-    console.log(products);
     setSortOption(selectedOption.value);
-
-    let sortedProducts = [];
 
     switch (selectedOption.value) {
       case "createdAtDesc":
-        sortedProducts = products.sort((a, b) => {
-          return b.createdAt.toMillis() - a.createdAt.toMillis();
-        });
+        setLocalProducts(
+          [...products].sort(
+            (a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()
+          )
+        );
         break;
       case "createdAtAsc":
-        sortedProducts = products.sort((a, b) => {
-          return a.createdAt.toMillis() - b.createdAt.toMillis();
-        });
+        setLocalProducts(
+          [...products].sort(
+            (a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()
+          )
+        );
         break;
       case "nameAsc":
-        sortedProducts = products.sort((a, b) => {
-          return a.name.localeCompare(b.name);
-        });
+        setLocalProducts(
+          [...products].sort((a, b) => a.name.localeCompare(b.name))
+        );
         break;
       case "nameDesc":
-        sortedProducts = products.sort((a, b) => {
-          return b.name.localeCompare(a.name);
-        });
+        setLocalProducts(
+          [...products].sort((a, b) => b.name.localeCompare(a.name))
+        );
         break;
       default:
-        sortedProducts = products.sort((a, b) => {
-          return b.createdAt.toMillis() - a.createdAt.toMillis();
-        });
-        break;
+        setLocalProducts([...products]);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    const files = products.find((product) => product.id === id).files;
+
+    await Promise.all(
+      files.map(async (file) => {
+        const storageRef = ref(storage, `${user.uid}/${file}`);
+        await deleteObject(storageRef);
+      })
+    );
+
+    await deleteDoc(doc(db, `users/${user.uid}/products/${id}`));
+  };
+
+  const getRemainingWarrantyLength = (productId) => {
+    const product = products.find((product) => product.id === productId);
+
+    console.log(product);
+
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const purchaseDate = product.purchaseDate;
+    const warrantyLength = product.warrantyLength;
+    const warrantyLengthUnit = product.warrantyLengthUnit;
+
+    console.log(purchaseDate, warrantyLength, warrantyLengthUnit);
+
+    const dt = DateTime.fromISO(`${purchaseDate}T00:00:00`, {
+      zone: clientTimezone,
+    });
+    const expirationDate = dt.plus({ [warrantyLengthUnit]: warrantyLength });
+
+    const now = DateTime.now();
+
+    const diff = expirationDate.diff(now, ["years", "months", "days"]);
+
+    console.log(diff);
+
+    if (diff.years <= 0 && diff.months <= 0 && diff.days <= 0) {
+      return "Expired";
     }
 
-    setProducts(sortedProducts);
+    return `${diff.years} years, ${diff.months} months, ${Math.round(
+      diff.days
+    )} days`;
   };
 
   return (
     <div>
       <h2>Products</h2>
+      <button
+        onClick={() => {
+          setModalOpen(true);
+          setModalContent({
+            component: "ADD_PRODUCT",
+            params: { availableTags: allTags },
+          });
+        }}
+      >
+        Add New Product
+      </button>
       <div
         style={{
           display: "flex",
@@ -165,25 +272,6 @@ const Products = ({ db, storage, uid }) => {
             onChange={handleSortChange}
             value={sortOptions.find((option) => option.value === sortOption)}
           />
-          <button
-            style={{ backgroundColor: showFilters ? "lightblue" : "#f9f9f9" }}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filter
-          </button>
-          {showFilters && (
-            <Select
-              isMulti
-              options={allTags.map((tag) => ({ value: tag, label: tag }))}
-              onChange={(selectedTags) => {
-                const tags = selectedTags.map((tag) => tag.value);
-                const filteredProducts = productsMaster.filter((product) =>
-                  tags.every((tag) => product.tags?.includes(tag))
-                );
-                setProducts(filteredProducts);
-              }}
-            />
-          )}
         </div>
         <input
           type="text"
@@ -200,7 +288,7 @@ const Products = ({ db, storage, uid }) => {
           gap: "1rem",
         }}
       >
-        {products.map((product) => (
+        {localProducts.map((product) => (
           <div
             key={product.id}
             style={{
@@ -209,12 +297,23 @@ const Products = ({ db, storage, uid }) => {
               minWidth: "150px",
             }}
           >
-            <button onClick={() => setProdToEdit(product)}>Edit</button>
+            <button
+              onClick={() => {
+                setModalOpen(true);
+                setModalContent({
+                  component: "EDIT_PRODUCT",
+                  params: { product, availableTags: allTags },
+                });
+              }}
+            >
+              Edit
+            </button>
             <h3 style={{ width: "fit-content" }}>{product.name}</h3>
             <p style={{ width: "fit-content" }}>{product.purchaseDate}</p>
             <p style={{ width: "fit-content" }}>
               {product.warrantyLength} {product.warrantyLengthUnit}
             </p>
+            <p>Warranty remaining: {getRemainingWarrantyLength(product.id)}</p>
             <p style={{ width: "fit-content" }}>{product.notes}</p>
             {product.tags?.length ? (
               <>
@@ -226,28 +325,9 @@ const Products = ({ db, storage, uid }) => {
               </>
             ) : null}
 
-            <button
-              onClick={() =>
-                deleteDoc(doc(db, `users/${uid}/products/${product.id}`))
-              }
-            >
-              Delete
-            </button>
+            <button onClick={() => deleteProduct(product.id)}>Delete</button>
           </div>
         ))}
-      </div>
-      <hr />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "1rem",
-        }}
-      >
-        <AddProductForm addProduct={addProduct} availableTags={allTags} />
-        {prodToEdit && (
-          <EditProductForm editProduct={editProduct} product={prodToEdit} />
-        )}
       </div>
     </div>
   );

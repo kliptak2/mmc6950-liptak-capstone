@@ -1,11 +1,11 @@
 import SignUp from "./auth/signup";
 import SignIn from "./auth/signin";
 
-const Landing = () => {
+const Landing = ({ auth, setUser }) => {
   return (
     <div style={{ display: "flex", gap: "2rem" }}>
-      <SignUp />
-      <SignIn />
+      <SignUp auth={auth} setUser={setUser} />
+      <SignIn auth={auth} setUser={setUser} />
     </div>
   );
 };

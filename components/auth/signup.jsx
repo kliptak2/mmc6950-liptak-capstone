@@ -1,44 +1,21 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
-import { FirebaseContext } from "../../context/context";
-import useUserStore from "../../state/user";
 
-const SignUp = () => {
-  const { auth, db } = useContext(FirebaseContext);
-
-  const setUser = useUserStore((state) => state.setUser);
-
+const SignUp = ({ auth, setUser }) => {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const signUp = async () => {
     try {
-      const createResponse = await createUserWithEmailAndPassword(
+      const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      const authUser = createResponse.user;
-
-      if (!authUser) {
-        return;
-      }
-
-      const userDocData = {
-        categories: ["Electronics", "Home & Kitchen", "Kids & Toys", "Sports"],
-        email: email,
-        name: name,
-      };
-
-      await setDoc(doc(db, "users", authUser.uid), userDocData);
-
-      setUser({
-        ...authUser,
-        ...userDocData,
-      });
+      const user = userCredential.user;
+      console.log(user);
+      setUser(user);
     } catch (error) {
       console.error(error);
     }
@@ -55,13 +32,6 @@ const SignUp = () => {
       }}
     >
       <h2>Sign Up</h2>
-      <label htmlFor="name">Name</label>
-      <input
-        name="name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
       <label htmlFor="email">Email</label>
       <input
         name="email"

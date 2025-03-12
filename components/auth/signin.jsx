@@ -1,41 +1,21 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { FirebaseContext } from "../../context/context";
-import useUserStore from "../../state/user";
 
-const SignIn = () => {
-  const { auth, db } = useContext(FirebaseContext);
-
-  const setUser = useUserStore((state) => state.setUser);
-
+const SignIn = ({ auth, setUser }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const signIn = async () => {
     try {
-      const signinResponse = await signInWithEmailAndPassword(
+      const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
+      const user = userCredential.user;
 
-      const authUser = signinResponse.user;
-
-      if (!authUser) {
-        return;
-      }
-
-      const userDoc = await getDoc(doc(db, "users", authUser.uid));
-
-      if (!userDoc.exists()) {
-        return;
-      }
-
-      setUser({
-        ...authUser,
-        ...userDoc.data(),
-      });
+      console.log(user);
+      setUser(user);
     } catch (error) {
       console.error(error);
     }

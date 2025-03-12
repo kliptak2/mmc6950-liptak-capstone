@@ -1,0 +1,27 @@
+.backdrop {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #00000080;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overscroll-behavior: none;
+}
+
+.modal {
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: #fffafa;
+  overflow: none;
+  z-index: 1001;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90%;
+  max-height: 90%;
+}

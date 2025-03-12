@@ -1,54 +1,36 @@
-import { useState } from "react";
+import { useContext } from "react";
 import "./App.css";
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import {
-  getAuth,
-  setPersistence,
-  browserLocalPersistence,
-  onAuthStateChanged,
-} from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import Navigation from "./components/navigation";
 import Landing from "./components/landing";
 import Products from "./components/products/products";
+import Modal from "./components/modal";
+import useSystemStore from "./state/system";
+import useUserStore from "./state/user";
+import { FirebaseContext } from "./context/context";
 
 function App() {
-  const [user, setUser] = useState(null);
+  const { auth } = useContext(FirebaseContext);
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTHDOMAIN_KEY,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECTID_KEY,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGEBUCKET_KEY,
-    messagingSenderId: import.meta.env.ITE_FIREBASE_MESSAGINGSENDERID_KEY,
-    appId: import.meta.env.VITE_FIREBASE_APPID_KEY,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENTID_KEY,
-  };
+  const setModalComponent = useSystemStore((state) => state.setModalComponent);
+  const setModalOpen = useSystemStore((state) => state.setModalOpen);
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence);
-  const storage = getStorage(app);
+  const user = useUserStore((state) => state.user);
+  const setUser = useUserStore((state) => state.setUser);
+  const clearProducts = useUserStore((state) => state.clearProducts);
 
   onAuthStateChanged(auth, (user) => {
     setUser(user);
   });
 
   return (
-    <div>
-      {!user && <Landing auth={auth} db={db} setUser={setUser} />}
-      {!!user && (
-        <>
-          <div>
-            <h1>Welcome, {user.email}</h1>
-            <Products db={db} storage={storage} uid={user?.uid} />
-          </div>
-        </>
-      )}
-    </div>
+    <>
+      <Navigation />
+      {!user && <Landing />}
+      {!!user && <Products />}
+
+      <Modal />
+    </>
   );
 }
 

@@ -25,9 +25,22 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
-  min-width: 320px;
+  flex-direction: column;
+  /* place-items: center; */
+  min-width: 900px;
   min-height: 100vh;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 1px solid #333;
+  border-right: 1px solid #333;
+  border-bottom: 1px solid #333;
+  padding: 0 1rem;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 h1 {
