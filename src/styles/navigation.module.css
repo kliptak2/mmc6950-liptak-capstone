@@ -1,0 +1,22 @@
+.navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 1rem;
+
+  background-color: var(--pk-teal);
+  color: white;
+}
+
+.loggedIn {
+  justify-content: space-between;
+}
+
+.menuButton {
+  all: unset;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

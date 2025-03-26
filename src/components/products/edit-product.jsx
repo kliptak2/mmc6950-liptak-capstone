@@ -12,6 +12,8 @@ import {
 import useSystemStore from "../../state/system";
 import useUserStore from "../../state/user";
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
+import * as Popover from "@radix-ui/react-popover";
+import { v4 as uuidv4 } from "uuid";
 
 const EditProductForm = ({ availableTags, product }) => {
   const { db, storage } = useContext(FirebaseContext);
@@ -21,9 +23,12 @@ const EditProductForm = ({ availableTags, product }) => {
 
   const user = useUserStore((state) => state.user);
 
+  const [errors, setErrors] = useState([]);
+  const [extraFields, setExtraFields] = useState([]);
   const [files, setFiles] = useState([]);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
   const [warrantyLength, setWarrantyLength] = useState("");
@@ -55,6 +60,23 @@ const EditProductForm = ({ availableTags, product }) => {
 
     initialize();
   }, [product]);
+
+  useEffect(() => {
+    const fieldLabelsAndCounts = extraFields.reduce((acc, field) => {
+      if (acc[field.label]) {
+        acc[field.label]++;
+      } else {
+        acc[field.label] = 1;
+      }
+      return acc;
+    }, {});
+
+    for (const key in fieldLabelsAndCounts) {
+      if (fieldLabelsAndCounts[key] > 1) {
+        setErrors([...errors, key]);
+      }
+    }
+  }, [extraFields]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +114,8 @@ const EditProductForm = ({ availableTags, product }) => {
       ...fileNames,
     ];
 
-    await updateDoc(doc(db, `users/${user.uid}/products/${product.id}`), {
+    const docBody = {
+      createdAt: serverTimestamp(),
       files: finalFilenames,
       name,
       notes,
@@ -100,10 +123,30 @@ const EditProductForm = ({ availableTags, product }) => {
       tags,
       warrantyLength,
       warrantyLengthUnit,
-    });
+    };
+
+    if (extraFields.length) {
+      docBody.extraFields = extraFields;
+    }
+
+    await updateDoc(
+      doc(db, `users/${user.uid}/products/${product.id}`),
+      docBody
+    );
 
     setModalOpen(false);
     setModalContent({ component: "", params: null });
+  };
+
+  const addNewField = (type) => {
+    const newField = {
+      id: uuidv4(),
+      type,
+      value: "",
+      label: type.charAt(0).toUpperCase() + type.slice(1),
+    };
+    setExtraFields([...extraFields, newField]);
+    setPopoverOpen(false);
   };
 
   return (
@@ -211,6 +254,52 @@ const EditProductForm = ({ availableTags, product }) => {
             ))}
           </div>
         )}
+        {extraFields.map((field, index) => (
+          <div key={`extraField-${field.type}-${field.title}`}>
+            <label htmlFor={`extraField-${field.type}-${field.title}`}>
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              name={`extraField-${field.type}-${field.title}`}
+              value={field.value}
+              onChange={(e) => {
+                const newFields = [...extraFields];
+                newFields[index] = e.target.value;
+                setExtraFields(newFields);
+              }}
+            />
+          </div>
+        ))}
+        <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <Popover.Trigger asChild>
+            <button
+              type="button"
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#007bff",
+              }}
+              onClick={() => setPopoverOpen(true)}
+            >
+              Add Extra Field
+            </button>
+          </Popover.Trigger>
+          <Popover.Content
+            side="top"
+            style={{
+              backgroundColor: "white",
+              border: "1px solid #ccc",
+              padding: "0.5rem",
+            }}
+          >
+            <ul>
+              <li onClick={() => addNewField("text")}>Text</li>
+              <li onClick={() => addNewField("date")}>Date</li>
+            </ul>
+          </Popover.Content>
+        </Popover.Root>
         <button onClick={handleSubmit}>Edit Product</button>
       </div>
     </div>

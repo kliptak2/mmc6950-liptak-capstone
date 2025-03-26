@@ -1,7 +1,9 @@
 import { useContext } from "react";
 import useUserStore from "../state/user";
 import { FirebaseContext } from "../context/context";
-import { set } from "lodash";
+import styles from "../styles/navigation.module.css";
+import clsx from "clsx";
+import MenuIcon from "@mui/icons-material/Menu";
 
 const Navigation = () => {
   const { auth } = useContext(FirebaseContext);
@@ -11,18 +13,19 @@ const Navigation = () => {
   const user = useUserStore((state) => state.user);
 
   return (
-    <nav>
+    <nav className={clsx(styles.navigation, !!user && styles.loggedIn)}>
       <h1>ProductKeeper</h1>
 
       {user && (
         <button
-          onClick={() => {
-            auth.signOut();
-            clearProducts();
-            setUser(null);
-          }}
+          className={styles.menuButton}
+          // onClick={() => {
+          //   auth.signOut();
+          //   clearProducts();
+          //   setUser(null);
+          // }}
         >
-          Sign Out
+          <MenuIcon fontSize="large" />
         </button>
       )}
     </nav>

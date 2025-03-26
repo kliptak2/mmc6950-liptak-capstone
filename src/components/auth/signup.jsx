@@ -1,10 +1,16 @@
 import { useState, useContext } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { FirebaseContext } from "../../context/context";
 import useUserStore from "../../state/user";
+import styles from "../../styles/auth.module.css";
+import { ArrowBack } from "@mui/icons-material";
 
-const SignUp = () => {
+const SignUp = (props) => {
+  const { goBack } = props;
   const { auth, db } = useContext(FirebaseContext);
 
   const setUser = useUserStore((state) => state.setUser);
@@ -28,7 +34,7 @@ const SignUp = () => {
       }
 
       const userDocData = {
-        categories: ["Electronics", "Home & Kitchen", "Kids & Toys", "Sports"],
+        createdAt: serverTimestamp(),
         email: email,
         name: name,
       };
@@ -45,56 +51,67 @@ const SignUp = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        padding: "0.5rem",
-        border: "1px solid black",
-      }}
-    >
-      <h2>Sign Up</h2>
-      <label htmlFor="name">Name</label>
-      <input
-        name="name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <label htmlFor="email">Email</label>
-      <input
-        name="email"
-        type="text"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <label htmlFor="password">Password</label>
-      <input
-        name="password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <label htmlFor="confirmPassword">Confirm Password</label>
-      <input
-        name="confirmPassword"
-        type="password"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-      />
+    <>
       <button
-        onClick={signUp}
-        disabled={
-          !email ||
-          !password ||
-          !confirmPassword ||
-          password !== confirmPassword
-        }
+        onClick={() => {
+          console.log("click: ", goBack);
+          goBack();
+        }}
+        className={styles.backButton}
       >
-        Sign Up
+        <ArrowBack /> Go Back
       </button>
-    </div>
+      <h2>Sign Up</h2>
+      <div className={styles.formContainer}>
+        <div>
+          <label htmlFor="name">Name</label>
+          <input
+            name="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="email">Email</label>
+          <input
+            name="email"
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="confirmPassword">Confirm Password</label>
+          <input
+            name="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={signUp}
+          disabled={
+            !email ||
+            !password ||
+            !confirmPassword ||
+            password !== confirmPassword
+          }
+        >
+          Sign Up
+        </button>
+      </div>
+    </>
   );
 };
 

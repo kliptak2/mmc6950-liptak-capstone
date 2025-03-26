@@ -14,6 +14,8 @@ import useUserStore from "../../state/user";
 import useSystemStore from "../../state/system";
 import { isEqual } from "lodash";
 import { DateTime } from "luxon";
+import styles from "../../styles/products.module.css";
+import AddIcon from "@mui/icons-material/Add";
 
 const Products = () => {
   const { db, storage } = useContext(FirebaseContext);
@@ -246,7 +248,6 @@ const Products = () => {
 
   return (
     <div>
-      <h2>Products</h2>
       <button
         onClick={() => {
           setModalOpen(true);
@@ -255,8 +256,9 @@ const Products = () => {
             params: { availableTags: allTags },
           });
         }}
+        className={styles.addProductButton}
       >
-        Add New Product
+        <AddIcon />
       </button>
       <div
         style={{

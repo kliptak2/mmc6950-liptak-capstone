@@ -1,0 +1,47 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  width: 90dvw;
+  margin: 0 auto;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.buttonContainer > button {
+  margin: 0.5rem;
+  width: 10rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50px;
+  font-family: "ofelia-display";
+  font-size: 1.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+}
+
+#signin {
+  background-color: var(--pk-teal);
+}
+
+#signup {
+  border: 2px solid var(--pk-teal);
+  color: var(--pk-teal);
+  background-color: white;
+}

@@ -3,8 +3,11 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { FirebaseContext } from "../../context/context";
 import useUserStore from "../../state/user";
+import styles from "../../styles/auth.module.css";
+import { ArrowBack } from "@mui/icons-material";
 
-const SignIn = () => {
+const SignIn = (props) => {
+  const { goBack } = props;
   const { auth, db } = useContext(FirebaseContext);
 
   const setUser = useUserStore((state) => state.setUser);
@@ -42,34 +45,41 @@ const SignIn = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        padding: "0.5rem",
-        border: "1px solid black",
-      }}
-    >
-      <h2>Sign In</h2>
-      <label htmlFor="email">Email</label>
-      <input
-        name="email"
-        type="text"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <label htmlFor="password">Password</label>
-      <input
-        name="password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={signIn} disabled={!email || !password}>
-        Sign In
+    <>
+      <button
+        onClick={() => {
+          console.log("click: ", goBack);
+          goBack();
+        }}
+        className={styles.backButton}
+      >
+        <ArrowBack /> Go Back
       </button>
-    </div>
+      <h2>Sign In</h2>
+      <div className={styles.formContainer}>
+        <div>
+          <label htmlFor="email">Email</label>
+          <input
+            name="email"
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button onClick={signIn} disabled={!email || !password}>
+          Sign In
+        </button>
+      </div>
+    </>
   );
 };
 
