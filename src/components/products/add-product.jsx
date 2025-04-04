@@ -1,6 +1,8 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import CreateableSelect from "react-select/creatable";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import SaveIcon from "@mui/icons-material/Save";
 import { FirebaseContext } from "../../context/context";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
@@ -8,16 +10,15 @@ import useSystemStore from "../../state/system";
 import useUserStore from "../../state/user";
 import * as Popover from "@radix-ui/react-popover";
 import { v4 as uuidv4 } from "uuid";
+import styles from "../../styles/add-product.module.css";
 
 const AddProductForm = ({ availableTags }) => {
   const { db, storage } = useContext(FirebaseContext);
 
-  const setModalOpen = useSystemStore((state) => state.setModalOpen);
-  const setModalContent = useSystemStore((state) => state.setModalContent);
+  const setDrawerOpen = useSystemStore((state) => state.setDrawerOpen);
+  const setDrawerContent = useSystemStore((state) => state.setDrawerContent);
 
   const user = useUserStore((state) => state.user);
-
-  const [errors, setErrors] = useState([]);
   const [extraFields, setExtraFields] = useState([]);
   const [files, setFiles] = useState([]);
   const [name, setName] = useState("");
@@ -26,24 +27,9 @@ const AddProductForm = ({ availableTags }) => {
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
   const [warrantyLength, setWarrantyLength] = useState("");
-  const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("");
+  const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("days");
 
-  useEffect(() => {
-    const fieldLabelsAndCounts = extraFields.reduce((acc, field) => {
-      if (acc[field.label]) {
-        acc[field.label]++;
-      } else {
-        acc[field.label] = 1;
-      }
-      return acc;
-    }, {});
-
-    for (const key in fieldLabelsAndCounts) {
-      if (fieldLabelsAndCounts[key] > 1) {
-        setErrors([...errors, key]);
-      }
-    }
-  }, [extraFields]);
+  const fileInputRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +46,6 @@ const AddProductForm = ({ availableTags }) => {
 
     const docBody = {
       createdAt: serverTimestamp(),
-
       files: fileNames,
       name,
       notes,
@@ -71,7 +56,7 @@ const AddProductForm = ({ availableTags }) => {
     };
 
     if (extraFields.length) {
-      docBody.extraFields = extraFields;
+      docBody.extraFields = extraFields.filter((field) => field.value);
     }
 
     const docRef = await addDoc(
@@ -81,8 +66,8 @@ const AddProductForm = ({ availableTags }) => {
 
     console.log("Document written with ID: ", docRef.id);
 
-    setModalOpen(false);
-    setModalContent({ component: "", params: null });
+    setDrawerOpen(false);
+    setDrawerContent({ component: "", params: null });
   };
 
   const addNewField = (type) => {
@@ -97,120 +82,91 @@ const AddProductForm = ({ availableTags }) => {
   };
 
   return (
-    <div>
-      <h3>Add Product</h3>
-      <form
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "600px",
-          alignItems: "flex-start",
-        }}
-        onSubmit={handleSubmit}
-      >
-        <label htmlFor="name">
-          Name<sup>*</sup>
-        </label>
-        <input
-          type="text"
-          name="name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <label htmlFor="purchaseDate">Purchase Date</label>
-        <input
-          type="date"
-          name="purchaseDate"
-          required
-          value={purchaseDate}
-          onChange={(e) => setPurchaseDate(e.target.value)}
-        />
-        <label htmlFor="warrantyLength">Warranty Length</label>
-        <input
-          type="text"
-          name="warrantyLength"
-          required
-          value={warrantyLength}
-          onChange={(e) => setWarrantyLength(e.target.value)}
-        />
-        <label htmlFor="warrantyLengthUnit">Warranty Length Unit</label>
-        <select
-          name="warrantyLengthUnit"
-          required
-          value={warrantyLengthUnit}
-          onChange={(e) => setWarrantyLengthUnit(e.target.value)}
-        >
-          <option value="days">Days</option>
-          <option value="months">Months</option>
-          <option value="years">Years</option>
-        </select>
-        <label htmlFor="notes">Notes</label>
-        <textarea
-          name="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-        <CreateableSelect
-          isMulti
-          options={availableTags.map((tag) => ({
-            value: tag,
-            label: tag,
-          }))}
-          onChange={(tags) => {
-            setTags(tags.map((tag) => tag.value));
-          }}
-        />
-        <label htmlFor="files">Add Images or Files</label>
-        <input
-          type="file"
-          name="files"
-          multiple
-          onChange={(e) => {
-            console.log(e.target.files);
-            if (!e.target.files || !e.target.files.length) {
-              return;
-            }
-
-            setFiles(...files, Array.from(e.target.files));
-          }}
-        />
-        {files.map((file) => (
-          <div
-            key={file.name}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              width: "100%",
-              backgroundColor: "#f4efee",
-              margin: "0.25rem 0",
-            }}
-          >
-            <p style={{ textAlign: "left", width: "fit-content" }}>
-              {file.name}
-            </p>
-            <button
-              onClick={() => setFiles(files.filter((f) => f !== file))}
-              style={{ backgroundColor: "transparent", border: "none" }}
+    <div className={styles.container}>
+      <h2>Add Product</h2>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div>
+          <label htmlFor="name">
+            Name<sup>*</sup>
+          </label>
+          <input
+            type="text"
+            name="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Product Name"
+          />
+        </div>
+        <div>
+          <label htmlFor="purchaseDate">
+            Purchase Date<sup>*</sup>
+          </label>
+          <input
+            type="date"
+            name="purchaseDate"
+            required
+            value={purchaseDate}
+            onChange={(e) => setPurchaseDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="warrantyLength">
+            Warranty Length<sup>*</sup>
+          </label>
+          <div className={styles.warrantyInputs}>
+            <input
+              type="text"
+              name="warrantyLength"
+              required
+              value={warrantyLength}
+              onChange={(e) => setWarrantyLength(e.target.value)}
+              placeholder="Warranty Length"
+            />
+            <select
+              name="warrantyLengthUnit"
+              required
+              value={warrantyLengthUnit}
+              onChange={(e) => setWarrantyLengthUnit(e.target.value)}
             >
-              <DeleteIcon />
-            </button>
+              <option value="days">Days</option>
+              <option value="months">Months</option>
+              <option value="years">Years</option>
+            </select>
           </div>
-        ))}
+        </div>
+        <div>
+          <label htmlFor="notes">Notes</label>
+          <textarea
+            name="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={6}
+          />
+        </div>
         {extraFields.map((field, index) => (
           <div key={`extraField-${field.type}-${field.title}`}>
-            <label htmlFor={`extraField-${field.type}-${field.title}`}>
-              {field.label}
-            </label>
+            <input
+              type="text"
+              name={`extraField-${field.type}-${field.title}`}
+              value={field.label}
+              onChange={(e) => {
+                const newFields = [...extraFields];
+                newFields[index].label = e.target.value;
+                setExtraFields(newFields);
+              }}
+              className={styles.fieldLabelInput}
+            />
             <input
               type={field.type}
               name={`extraField-${field.type}-${field.title}`}
               value={field.value}
               onChange={(e) => {
                 const newFields = [...extraFields];
-                newFields[index] = e.target.value;
+                newFields[index].value = e.target.value;
                 setExtraFields(newFields);
               }}
+              className={styles.fieldInput}
             />
           </div>
         ))}
@@ -218,52 +174,138 @@ const AddProductForm = ({ availableTags }) => {
           <Popover.Trigger asChild>
             <button
               type="button"
-              style={{
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "#007bff",
-              }}
+              className={styles.popoverTrigger}
               onClick={() => setPopoverOpen(true)}
             >
+              <AddIcon />
               Add Extra Field
             </button>
           </Popover.Trigger>
-          <Popover.Content
-            side="top"
-            style={{
-              backgroundColor: "white",
-              border: "1px solid #ccc",
-              padding: "0.5rem",
-              margin: 0,
-            }}
-          >
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              <li
-                onClick={() => addNewField("text")}
-                style={{ padding: "0.5rem" }}
-              >
-                Text
-              </li>
-              <li
-                onClick={() => addNewField("date")}
-                style={{ padding: "0.5rem" }}
-              >
-                Date
-              </li>
-            </ul>
+          <Popover.Content side="top" className={styles.popoverContent}>
+            <button onClick={() => addNewField("text")}>Text</button>
+            <button onClick={() => addNewField("date")}>Date</button>
           </Popover.Content>
         </Popover.Root>
-        <button
-          style={{
-            margin: "1rem auto",
-          }}
-          type="submit"
-          disabled={errors.length > 0}
-        >
-          Add Product
-        </button>
+        <div>
+          <label htmlFor="tags">Tags</label>
+          <CreateableSelect
+            isMulti
+            options={availableTags.map((tag) => ({
+              value: tag,
+              label: tag,
+            }))}
+            onChange={(tags) => {
+              setTags(tags.map((tag) => tag.value));
+            }}
+            name="tags"
+            styles={{
+              container: (provided) => ({
+                ...provided,
+                padding: "0.5rem",
+                borderRadius: "12px",
+                border: "1px solid #c7ccd1",
+              }),
+              control: (provided) => ({
+                ...provided,
+                border: "none",
+                ":hover": {
+                  borderColor: "none",
+                },
+              }),
+              group: (provided) => ({
+                ...provided,
+                padding: 0,
+              }),
+              groupHeading: () => ({
+                borderBottom: "1px solid #606265",
+                color: "#606265",
+                marginBottom: "0.25rem",
+                padding: "1rem 0 0 0.5rem",
+              }),
+              option: (provided, { isSelected }) => ({
+                ...provided,
+                color: "#232b2b",
+                display: "flex",
+                alignItems: "center",
+                ":hover": {
+                  backgroundColor: "#d1cbc9",
+                },
+                "> svg": {
+                  marginRight: "0.5rem",
+                },
+              }),
+              valueContainer: (provided) => ({
+                ...provided,
+                border: "none",
+              }),
+              singleValue: (provided, { data }) => ({
+                ...provided,
+                border: "none",
+              }),
+              dropdownIndicator: (provided) => ({
+                ...provided,
+                color: "#606265",
+              }),
+              placeholder: (provided) => ({
+                ...provided,
+                color: "black",
+                fontSize: "0.8rem",
+              }),
+              indicatorSeparator: (provided) => ({
+                ...provided,
+                display: "none",
+              }),
+              indicatorsContainer: (provided) => ({
+                ...provided,
+                padding: "0 0.5rem",
+              }),
+            }}
+          />
+        </div>
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="files"
+            multiple
+            onChange={(e) => {
+              console.log(e.target.files);
+              if (!e.target.files || !e.target.files.length) {
+                return;
+              }
+
+              setFiles(...files, Array.from(e.target.files));
+            }}
+            // id={styles.fileInput}
+            style={{ display: "none" }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            className={styles.fileButton}
+          >
+            <AddIcon />
+            Add Images or Files
+          </button>
+        </div>
+        {files.map((file) => (
+          <div key={file.name} className={styles.fileItem}>
+            <p>{file.name}</p>
+            <button onClick={() => setFiles(files.filter((f) => f !== file))}>
+              <DeleteIcon />
+            </button>
+          </div>
+        ))}
       </form>
+
+      <button
+        onClick={handleSubmit}
+        disabled={!name || !purchaseDate || !warrantyLength}
+        id={styles.submitButton}
+      >
+        <SaveIcon />
+        Save
+      </button>
     </div>
   );
 };

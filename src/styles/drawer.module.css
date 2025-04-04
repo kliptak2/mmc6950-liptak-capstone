@@ -1,0 +1,36 @@
+.backdrop {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #00000080;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overscroll-behavior: none;
+}
+
+.drawer {
+  width: calc(80dvw - 2rem);
+  height: 100dvh;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1001;
+  border-radius: 12px 0 0 12px;
+  padding: 1rem;
+  overscroll-behavior: none;
+}
+
+.drawerHeader {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.closeButton {
+  all: unset;
+}

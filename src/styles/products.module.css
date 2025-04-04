@@ -1,5 +1,5 @@
 .addProductButton {
-  position: absolute;
+  position: fixed;
   bottom: 2rem;
   right: 2rem;
   /* padding: 0.5rem; */
@@ -17,4 +17,191 @@
 .addProductButton > svg {
   width: 3rem;
   height: 3rem;
+}
+
+.controls {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 1rem;
+  width: 95%;
+  margin: 0.5rem auto;
+}
+
+.searchContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.searchContainer svg {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+}
+
+#searchLabel {
+  position: absolute;
+  top: 50%;
+  left: 2.5rem;
+  transform: translateY(-40%);
+}
+
+#searchInput {
+  padding: 0.5rem 0 0.5rem 2.5rem;
+  border-radius: 50px;
+  border: none;
+  background-color: var(--pk-light-gray);
+  width: 100%;
+  font-size: 1rem;
+}
+
+.clearSearchButton {
+  position: absolute;
+  top: 50%;
+  right: 1.75rem;
+  transform: translateY(-50%);
+  background-color: transparent;
+  border: none;
+}
+
+.sortButton {
+  all: unset;
+  margin: 0 0.25rem;
+}
+
+.popoverContent {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 3px 5px -1px,
+    rgba(0, 0, 0, 0.14) 0px 6px 10px 0px, rgba(0, 0, 0, 0.15) 0px 1px 18px 0px;
+  display: flex;
+  flex-direction: column;
+}
+
+.popoverContent > button {
+  /* all: unset; */
+  border: none;
+  background-color: transparent;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  /* font-weight: 600; */
+  font-size: 1.2rem;
+}
+
+.popoverContent > button:first-of-type {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.popoverContent > button:last-of-type {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.popoverContent > button > svg {
+  margin-right: 0.5rem;
+  visibility: hidden;
+}
+
+.popoverContent > .activeSortOption > svg {
+  visibility: visible;
+}
+
+.activeSortOption {
+  background-color: var(--pk-teal) !important;
+  color: white;
+}
+
+.popoverArrow {
+  fill: white;
+}
+
+.popoverArrow[data-activeIndex="0"] {
+  fill: var(--pk-teal);
+}
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  width: 95%;
+  margin: 0 auto;
+  gap: 0.75rem;
+  margin-bottom: 4rem;
+}
+
+.productCard {
+  display: flex;
+  align-items: stretch;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid var(--pk-light-gray);
+  min-height: 100px;
+}
+
+.imagePlaceholder {
+  width: 30%;
+  flex-shrink: 0;
+  background-color: var(--pk-light-gray);
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.imagePlaceholder > svg {
+  fill: var(--pk-dark-gray);
+}
+
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.5rem;
+  width: 70%;
+}
+
+.productInfo > h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.productInfo p {
+  margin: 0 0 0.25rem 0;
+}
+
+.productInfo progress {
+  width: 100%;
+}
+
+.productInfo progress[value] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.productInfo progress[value]::-webkit-progress-bar {
+  background-color: transparent;
+  border-radius: 12px;
+  border: 1px solid var(--pk-teal);
+}
+.productInfo progress[value]::-webkit-progress-value {
+  background-color: var(--pk-teal);
+  border-radius: 12px;
+}
+.productInfo progress[value]::-moz-progress-bar {
+  background-color: var(--pk-teal);
+  border-radius: 12px;
+}
+.tags {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.tag {
+  font-size: 0.8rem;
+  background-color: var(--pk-light-gray);
+  padding: 0.25rem;
+  border-radius: 50px;
 }

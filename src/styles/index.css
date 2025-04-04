@@ -3,6 +3,8 @@
 :root {
   --pk-teal: #33c9c1;
   --pk-black: #121416;
+  --pk-light-gray: #c7ccd1;
+  --pk-dark-gray: #40474f;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,20 +20,3 @@ body {
   min-height: 100vh;
   font-family: "ofelia-display";
 }
-
-/* nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 1px solid #333;
-  border-right: 1px solid #333;
-  border-bottom: 1px solid #333;
-  padding: 0 1rem;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-} */
-
-/* h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-} */

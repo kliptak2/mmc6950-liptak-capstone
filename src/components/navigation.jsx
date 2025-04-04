@@ -3,7 +3,7 @@ import useUserStore from "../state/user";
 import { FirebaseContext } from "../context/context";
 import styles from "../styles/navigation.module.css";
 import clsx from "clsx";
-import MenuIcon from "@mui/icons-material/Menu";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const Navigation = () => {
   const { auth } = useContext(FirebaseContext);
@@ -19,13 +19,13 @@ const Navigation = () => {
       {user && (
         <button
           className={styles.menuButton}
-          // onClick={() => {
-          //   auth.signOut();
-          //   clearProducts();
-          //   setUser(null);
-          // }}
+          onClick={() => {
+            auth.signOut();
+            clearProducts();
+            setUser(null);
+          }}
         >
-          <MenuIcon fontSize="large" />
+          <LogoutIcon fontSize="large" />
         </button>
       )}
     </nav>

@@ -25,6 +25,7 @@ const Landing = () => {
             </button>
             <button
               id={styles.signup}
+              // disabled
               onClick={() => setLandingContent("signup")}
             >
               Sign Up

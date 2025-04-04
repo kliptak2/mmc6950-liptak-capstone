@@ -38,10 +38,15 @@
 
 #signin {
   background-color: var(--pk-teal);
+  color: #000;
 }
 
 #signup {
-  border: 2px solid var(--pk-teal);
-  color: var(--pk-teal);
-  background-color: white;
+  background-color: #40474f;
+  color: #fff;
 }
+
+/* #signup:disabled {
+  background-color: #eee;
+  color: #c7ccd1;
+} */

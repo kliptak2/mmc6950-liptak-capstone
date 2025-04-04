@@ -2,7 +2,6 @@ import { useState, useEffect, useContext } from "react";
 import {
   collection,
   onSnapshot,
-  deleteDoc,
   doc,
   query,
   orderBy,
@@ -16,12 +15,19 @@ import { isEqual } from "lodash";
 import { DateTime } from "luxon";
 import styles from "../../styles/products.module.css";
 import AddIcon from "@mui/icons-material/Add";
+import SortIcon from "@mui/icons-material/Sort";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckIcon from "@mui/icons-material/Check";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import * as Popover from "@radix-ui/react-popover";
+import clsx from "clsx";
 
 const Products = () => {
   const { db, storage } = useContext(FirebaseContext);
 
-  const setModalOpen = useSystemStore((state) => state.setModalOpen);
-  const setModalContent = useSystemStore((state) => state.setModalContent);
+  const setDrawerOpen = useSystemStore((state) => state.setDrawerOpen);
+  const setDrawerContent = useSystemStore((state) => state.setDrawerContent);
 
   const products = useUserStore((state) => state.products);
   const setProducts = useUserStore((state) => state.setProducts);
@@ -29,6 +35,8 @@ const Products = () => {
 
   const [allTags, setAllTags] = useState([]);
   const [localProducts, setLocalProducts] = useState([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("createdAtDesc");
 
   const sortOptions = [
@@ -132,6 +140,7 @@ const Products = () => {
   }, []);
 
   const searchProducts = (searchTerm) => {
+    setSearchTerm(searchTerm);
     const filteredLocalProducts = [...products].filter((product) => {
       return product.name.toLowerCase().includes(searchTerm.toLowerCase());
     });
@@ -200,19 +209,6 @@ const Products = () => {
     }
   };
 
-  const deleteProduct = async (id) => {
-    const files = products.find((product) => product.id === id).files;
-
-    await Promise.all(
-      files.map(async (file) => {
-        const storageRef = ref(storage, `${user.uid}/${file}`);
-        await deleteObject(storageRef);
-      })
-    );
-
-    await deleteDoc(doc(db, `users/${user.uid}/products/${id}`));
-  };
-
   const getRemainingWarrantyLength = (productId) => {
     const product = products.find((product) => product.id === productId);
 
@@ -224,34 +220,56 @@ const Products = () => {
     const warrantyLength = product.warrantyLength;
     const warrantyLengthUnit = product.warrantyLengthUnit;
 
+    if (!purchaseDate || !warrantyLength || !warrantyLengthUnit) {
+      return null;
+    }
+
     console.log(purchaseDate, warrantyLength, warrantyLengthUnit);
 
-    const dt = DateTime.fromISO(`${purchaseDate}T00:00:00`, {
+    const dtPurchase = DateTime.fromISO(`${purchaseDate}T00:00:00`, {
       zone: clientTimezone,
     });
-    const expirationDate = dt.plus({ [warrantyLengthUnit]: warrantyLength });
+    const expirationDate = dtPurchase.plus({
+      [warrantyLengthUnit]: warrantyLength,
+    });
 
     const now = DateTime.now();
 
-    const diff = expirationDate.diff(now, ["years", "months", "days"]);
+    const daysSincePurchase = now.diff(dtPurchase, ["days"]).days;
 
-    console.log(diff);
+    const warrantyLengthInDays = expirationDate.diff(dtPurchase, ["days"]).days;
 
-    if (diff.years <= 0 && diff.months <= 0 && diff.days <= 0) {
-      return "Expired";
+    const warrantyPercentComplete = Math.max(
+      daysSincePurchase / warrantyLengthInDays,
+      0
+    );
+
+    console.log(`Warranty percent complete: ${warrantyPercentComplete}%`);
+
+    console.log(
+      `Days since purchase: ${daysSincePurchase}, Warranty length in days: ${warrantyLengthInDays}`
+    );
+
+    if (warrantyPercentComplete >= 1) {
+      return {
+        percentComplete: 1,
+        expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
+      };
     }
 
-    return `${diff.years} years, ${diff.months} months, ${Math.round(
-      diff.days
-    )} days`;
+    return {
+      percentComplete: warrantyPercentComplete,
+      expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
+    };
   };
 
   return (
     <div>
       <button
         onClick={() => {
-          setModalOpen(true);
-          setModalContent({
+          console.log("Add product");
+          setDrawerOpen(true);
+          setDrawerContent({
             component: "ADD_PRODUCT",
             params: { availableTags: allTags },
           });
@@ -260,76 +278,115 @@ const Products = () => {
       >
         <AddIcon />
       </button>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
-          <label htmlFor="sort">Sort By:</label>
-          <Select
-            name="sort"
-            options={sortOptions}
-            onChange={handleSortChange}
-            value={sortOptions.find((option) => option.value === sortOption)}
-          />
-        </div>
-        <input
-          type="text"
-          placeholder="Search"
-          onChange={(e) => {
-            searchProducts(e.target.value);
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        {localProducts.map((product) => (
-          <div
-            key={product.id}
-            style={{
-              border: "1px solid black",
-              padding: "0.5rem",
-              minWidth: "150px",
+      <div className={styles.controls}>
+        <div className={styles.searchContainer}>
+          <SearchIcon />
+          {!searchTerm && (
+            <label htmlFor="search" id={styles.searchLabel}>
+              Search
+            </label>
+          )}
+          <input
+            type="text"
+            onChange={(e) => {
+              searchProducts(e.target.value);
             }}
+            value={searchTerm}
+            id={styles.searchInput}
+          />
+          <button
+            disabled={!searchTerm}
+            onClick={() => {
+              setSearchTerm("");
+              searchProducts("");
+            }}
+            className={styles.clearSearchButton}
+            style={{ visibility: searchTerm ? "visible" : "hidden" }}
           >
-            <button
+            <CloseOutlinedIcon />
+          </button>
+        </div>
+        <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <Popover.Trigger asChild>
+            <button className={styles.sortButton}>
+              <SortIcon fontSize="large" />
+            </button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              className={styles.popoverContent}
+              align="start"
+              side="left"
+            >
+              {sortOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    handleSortChange(option);
+                    setPopoverOpen(false);
+                  }}
+                  className={clsx(
+                    option.value === sortOption && styles.activeSortOption
+                  )}
+                >
+                  <CheckIcon />
+                  {option.label}
+                </button>
+              ))}
+              <Popover.Arrow
+                className={styles.popoverArrow}
+                data-activeIndex={sortOptions.findIndex(
+                  (el) => el.value === sortOption
+                )}
+              />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      </div>
+      <div className={styles.productList}>
+        {localProducts.map((product) => {
+          const { percentComplete, expirationDate } =
+            getRemainingWarrantyLength(product.id);
+
+          return (
+            <div
+              key={product.id}
+              className={styles.productCard}
               onClick={() => {
-                setModalOpen(true);
-                setModalContent({
-                  component: "EDIT_PRODUCT",
-                  params: { product, availableTags: allTags },
+                setDrawerOpen(true);
+                setDrawerContent({
+                  component: "PRODUCT_DETAILS",
+                  params: { productId: product.id, availableTags: allTags },
                 });
               }}
             >
-              Edit
-            </button>
-            <h3 style={{ width: "fit-content" }}>{product.name}</h3>
-            <p style={{ width: "fit-content" }}>{product.purchaseDate}</p>
-            <p style={{ width: "fit-content" }}>
-              {product.warrantyLength} {product.warrantyLengthUnit}
-            </p>
-            <p>Warranty remaining: {getRemainingWarrantyLength(product.id)}</p>
-            <p style={{ width: "fit-content" }}>{product.notes}</p>
-            {product.tags?.length ? (
-              <>
-                <p>Tags:</p>
-                <ul>
-                  {product.tags &&
-                    product.tags.map((tag) => <li key={tag}>{tag}</li>)}
-                </ul>
-              </>
-            ) : null}
-
-            <button onClick={() => deleteProduct(product.id)}>Delete</button>
-          </div>
-        ))}
+              {product.previewImg ? (
+                <img />
+              ) : (
+                <div className={styles.imagePlaceholder}>
+                  <CameraAltOutlinedIcon fontSize="large" />
+                </div>
+              )}
+              <div className={styles.productInfo}>
+                <h3 style={{ width: "fit-content" }}>{product.name}</h3>
+                <div>
+                  <p>
+                    Warranty {percentComplete === 1 ? "expired" : "expires"}{" "}
+                    {expirationDate}
+                  </p>
+                  <progress value={percentComplete} />
+                </div>
+                <div className={styles.tags}>
+                  {product.tags.map((tag) => (
+                    <span key={tag} className={styles.tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
