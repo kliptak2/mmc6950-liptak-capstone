@@ -6,7 +6,7 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { ref, deleteObject } from "firebase/storage";
+import { ref, getDownloadURL } from "firebase/storage";
 import Select from "react-select";
 import { FirebaseContext } from "../../context/context";
 import useUserStore from "../../state/user";
@@ -52,8 +52,7 @@ const Products = () => {
         collection(db, `users/${user.uid}/products`),
         orderBy("createdAt", "desc")
       ),
-      (snapshot) => {
-        console.log("snapshot");
+      async (snapshot) => {
         // If the products are the same, don't update the state
         // This is to prevent infinite render loops
         if (
@@ -87,10 +86,29 @@ const Products = () => {
           return;
         }
 
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const data = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            let imgUrl = null;
+            if (doc.data().previewImg) {
+              console.log("Getting image URL");
+              const imageRef = ref(
+                storage,
+                `${user.uid}/${doc.data().previewImg}`
+              );
+              imgUrl = await getDownloadURL(imageRef);
+            }
+
+            console.log("Image URL:", imgUrl);
+
+            return {
+              ...doc.data(),
+              id: doc.id,
+              previewImg: imgUrl,
+            };
+          })
+        );
+
+        console.log(data);
 
         switch (sortOption) {
           case "createdAtDesc":
@@ -127,8 +145,6 @@ const Products = () => {
           });
           return acc;
         }, []);
-
-        console.log(allTags);
 
         setAllTags(allTags);
       }
@@ -176,7 +192,6 @@ const Products = () => {
   };
 
   const handleSortChange = (selectedOption) => {
-    console.log(selectedOption);
     setSortOption(selectedOption.value);
 
     switch (selectedOption.value) {
@@ -212,8 +227,6 @@ const Products = () => {
   const getRemainingWarrantyLength = (productId) => {
     const product = products.find((product) => product.id === productId);
 
-    console.log(product);
-
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const purchaseDate = product.purchaseDate;
@@ -223,8 +236,6 @@ const Products = () => {
     if (!purchaseDate || !warrantyLength || !warrantyLengthUnit) {
       return null;
     }
-
-    console.log(purchaseDate, warrantyLength, warrantyLengthUnit);
 
     const dtPurchase = DateTime.fromISO(`${purchaseDate}T00:00:00`, {
       zone: clientTimezone,
@@ -244,21 +255,15 @@ const Products = () => {
       0
     );
 
-    console.log(`Warranty percent complete: ${warrantyPercentComplete}%`);
-
-    console.log(
-      `Days since purchase: ${daysSincePurchase}, Warranty length in days: ${warrantyLengthInDays}`
-    );
-
     if (warrantyPercentComplete >= 1) {
       return {
-        percentComplete: 1,
+        percentComplete: 0,
         expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
       };
     }
 
     return {
-      percentComplete: warrantyPercentComplete,
+      percentComplete: 1 - warrantyPercentComplete,
       expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
     };
   };
@@ -267,7 +272,6 @@ const Products = () => {
     <div>
       <button
         onClick={() => {
-          console.log("Add product");
           setDrawerOpen(true);
           setDrawerContent({
             component: "ADD_PRODUCT",
@@ -361,7 +365,7 @@ const Products = () => {
               }}
             >
               {product.previewImg ? (
-                <img />
+                <img className={styles.previewImg} src={product.previewImg} />
               ) : (
                 <div className={styles.imagePlaceholder}>
                   <CameraAltOutlinedIcon fontSize="large" />
@@ -371,18 +375,20 @@ const Products = () => {
                 <h3 style={{ width: "fit-content" }}>{product.name}</h3>
                 <div>
                   <p>
-                    Warranty {percentComplete === 1 ? "expired" : "expires"}{" "}
+                    Warranty {percentComplete === 0 ? "expired" : "expires"}{" "}
                     {expirationDate}
                   </p>
                   <progress value={percentComplete} />
                 </div>
-                <div className={styles.tags}>
-                  {product.tags.map((tag) => (
-                    <span key={tag} className={styles.tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                {product?.tags?.length > 0 && (
+                  <div className={styles.tags}>
+                    {product.tags.map((tag) => (
+                      <span key={tag} className={styles.tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           );

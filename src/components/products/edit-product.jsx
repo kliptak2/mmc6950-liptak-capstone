@@ -3,6 +3,7 @@ import CreateableSelect from "react-select/creatable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import AddIcon from "@mui/icons-material/Add";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import { FirebaseContext } from "../../context/context";
 import { doc, updateDoc } from "firebase/firestore";
 import {
@@ -13,7 +14,6 @@ import {
 } from "firebase/storage";
 import useSystemStore from "../../state/system";
 import useUserStore from "../../state/user";
-import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import * as Popover from "@radix-ui/react-popover";
 import { v4 as uuidv4 } from "uuid";
 import styles from "../../styles/edit-product.module.css";
@@ -31,12 +31,14 @@ const EditProductForm = ({ availableTags, product }) => {
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [previewImg, setPreviewImg] = useState(null);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
   const [warrantyLength, setWarrantyLength] = useState("");
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("");
 
   const fileInputRef = useRef(null);
+  const previewImgInputRef = useRef(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -118,6 +120,14 @@ const EditProductForm = ({ availableTags, product }) => {
       ...fileNames,
     ];
 
+    let previewImgName = null;
+
+    if (previewImg.file) {
+      const storageRef = ref(storage, `${user.uid}/${previewImg.file.name}`);
+      await uploadBytes(storageRef, previewImg.file);
+      previewImgName = previewImg.file.name;
+    }
+
     const docBody = {
       createdAt: serverTimestamp(),
       files: finalFilenames,
@@ -156,370 +166,286 @@ const EditProductForm = ({ availableTags, product }) => {
   return (
     <div className={styles.container}>
       <h2>Edit Product</h2>
-      {/* <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "600px",
-          alignItems: "flex-start",
-        }}
-      >
-        <label htmlFor="name">
-          Name<sup>*</sup>
-        </label>
-        <input type="text" name="name" required defaultValue={product.name} />
-
-        <label htmlFor="purchaseDate">Purchase Date</label>
+      <div className={styles.content}>
         <input
-          type="date"
-          name="purchaseDate"
-          required
-          defaultValue={product.purchaseDate}
-        />
-        <label htmlFor="warrantyLength">Warranty Length</label>
-        <input
-          type="text"
-          name="warrantyLength"
-          required
-          defaultValue={product.warrantyLength}
-        />
-        <label htmlFor="warrantyLengthUnit">Warranty Length Unit</label>
-        <select
-          name="warrantyLengthUnit"
-          required
-          defaultValue={product.warrantyLengthUnit}
-        >
-          <option value="days">Days</option>
-          <option value="months">Months</option>
-          <option value="years">Years</option>
-        </select>
-        <label htmlFor="notes">Notes</label>
-        <textarea name="notes" defaultValue={product.notes} />
-        <CreateableSelect
-          isMulti
-          options={availableTags.map((tag) => ({
-            value: tag,
-            label: tag,
-          }))}
-          onChange={(tags) => {
-            setTags(tags.map((tag) => tag.value));
-          }}
-        />
-        <label htmlFor="files">Add Images or Files</label>
-        <input
+          ref={previewImgInputRef}
           type="file"
-          name="files"
-          multiple
+          id="preview-img"
+          accept="image/*"
           onChange={(e) => {
-            console.log(e.target.files);
-            if (!e.target.files || !e.target.files.length) {
-              return;
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                console.log(reader, reader.result);
+                setPreviewImg({
+                  file: file,
+                  url: reader.result,
+                });
+              };
+              reader.readAsDataURL(file);
             }
-
-            const updatedFiles = [...files, ...Array.from(e.target.files)];
-
-            console.log(updatedFiles);
-
-            setFiles(updatedFiles);
           }}
+          style={{ display: "none" }}
         />
-        {files.length && (
-          <div>
-            {files.map((file) => (
-              <div
-                key={file.name}
-                style={{ display: "flex", alignItems: "center" }}
-              >
-                {file.url ? (
-                  <a href={file.url} target="_blank" rel="noreferrer">
-                    {file.name}
-                    <ExternalLinkIcon />
-                  </a>
-                ) : (
-                  <p>{file.name}</p>
-                )}
-                <button
-                  onClick={() => {
-                    console.log("deleting");
-
-                    const updatedFiles = files.filter(
-                      (f) => f.name !== file.name
-                    );
-
-                    console.log(updatedFiles);
-
-                    setFiles(updatedFiles);
-                  }}
-                  style={{ backgroundColor: "transparent", border: "none" }}
-                >
-                  <DeleteIcon />
-                </button>
-              </div>
-            ))}
+        {previewImg ? (
+          <div
+            id={styles.previewImgWrapper}
+            onClick={() => previewImgInputRef.current.click()}
+          >
+            <img
+              id={styles.previewImg}
+              src={previewImg.url}
+              width={100}
+              height={100}
+            />
+            <span className={styles.addPreview}>
+              <AddIcon />
+            </span>
+          </div>
+        ) : (
+          <div
+            id={styles.previewPlaceholder}
+            onClick={() => previewImgInputRef.current.click()}
+          >
+            <CameraAltOutlinedIcon fontSize="large" />
+            <span className={styles.addPreview}>
+              <AddIcon />
+            </span>
           </div>
         )}
-        {extraFields.map((field, index) => (
-          <div key={`extraField-${field.type}-${field.title}`}>
-            <label htmlFor={`extraField-${field.type}-${field.title}`}>
-              {field.label}
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputWrapper}>
+            <label htmlFor="name">
+              Name<sup>*</sup>
             </label>
             <input
-              type={field.type}
-              name={`extraField-${field.type}-${field.title}`}
-              value={field.value}
-              onChange={(e) => {
-                const newFields = [...extraFields];
-                newFields[index] = e.target.value;
-                setExtraFields(newFields);
-              }}
+              type="text"
+              name="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Product Name"
             />
           </div>
-        ))}
-        <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <Popover.Trigger asChild>
+          <div className={styles.inputWrapper}>
+            <label htmlFor="purchaseDate">
+              Purchase Date<sup>*</sup>
+            </label>
+            <input
+              type="date"
+              name="purchaseDate"
+              required
+              value={purchaseDate}
+              onChange={(e) => setPurchaseDate(e.target.value)}
+            />
+          </div>
+          <div className={styles.inputWrapper}>
+            <label htmlFor="warrantyLength">
+              Warranty Length<sup>*</sup>
+            </label>
+            <div className={styles.warrantyInputs}>
+              <input
+                type="text"
+                name="warrantyLength"
+                required
+                value={warrantyLength}
+                onChange={(e) => setWarrantyLength(e.target.value)}
+                placeholder="Warranty Length"
+              />
+              <select
+                name="warrantyLengthUnit"
+                required
+                value={warrantyLengthUnit}
+                onChange={(e) => setWarrantyLengthUnit(e.target.value)}
+              >
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+          </div>
+          <div className={styles.inputWrapper}>
+            <label htmlFor="notes">Notes</label>
+            <textarea
+              name="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={6}
+            />
+          </div>
+          {extraFields.map((field, index) => (
+            <div
+              key={`extraField-${field.type}-${field.title}`}
+              className={styles.inputWrapper}
+            >
+              <input
+                type="text"
+                name={`extraField-${field.type}-${field.title}`}
+                value={field.label}
+                onChange={(e) => {
+                  const newFields = [...extraFields];
+                  newFields[index].label = e.target.value;
+                  setExtraFields(newFields);
+                }}
+                className={styles.fieldLabelInput}
+              />
+              <input
+                type={field.type}
+                name={`extraField-${field.type}-${field.title}`}
+                value={field.value}
+                onChange={(e) => {
+                  const newFields = [...extraFields];
+                  newFields[index].value = e.target.value;
+                  setExtraFields(newFields);
+                }}
+                className={styles.fieldInput}
+              />
+            </div>
+          ))}
+          <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className={styles.popoverTrigger}
+                onClick={() => setPopoverOpen(true)}
+              >
+                <AddIcon />
+                Add Extra Field
+              </button>
+            </Popover.Trigger>
+            <Popover.Content side="top" className={styles.popoverContent}>
+              <button onClick={() => addNewField("text")}>Text</button>
+              <button onClick={() => addNewField("date")}>Date</button>
+            </Popover.Content>
+          </Popover.Root>
+          <div>
+            <label htmlFor="tags">Tags</label>
+            <CreateableSelect
+              isMulti
+              options={availableTags.map((tag) => ({
+                value: tag,
+                label: tag,
+              }))}
+              onChange={(tags) => {
+                setTags(tags.map((tag) => tag.value));
+              }}
+              name="tags"
+              styles={{
+                container: (provided) => ({
+                  ...provided,
+                  padding: "0.5rem",
+                  borderRadius: "12px",
+                  border: "1px solid #c7ccd1",
+                }),
+                control: (provided) => ({
+                  ...provided,
+                  border: "none",
+                  ":hover": {
+                    borderColor: "none",
+                  },
+                }),
+                group: (provided) => ({
+                  ...provided,
+                  padding: 0,
+                }),
+                groupHeading: () => ({
+                  borderBottom: "1px solid #606265",
+                  color: "#606265",
+                  marginBottom: "0.25rem",
+                  padding: "1rem 0 0 0.5rem",
+                }),
+                option: (provided, { isSelected }) => ({
+                  ...provided,
+                  color: "#232b2b",
+                  display: "flex",
+                  alignItems: "center",
+                  ":hover": {
+                    backgroundColor: "#d1cbc9",
+                  },
+                  "> svg": {
+                    marginRight: "0.5rem",
+                  },
+                }),
+                valueContainer: (provided) => ({
+                  ...provided,
+                  border: "none",
+                }),
+                singleValue: (provided, { data }) => ({
+                  ...provided,
+                  border: "none",
+                }),
+                dropdownIndicator: (provided) => ({
+                  ...provided,
+                  color: "#606265",
+                }),
+                placeholder: (provided) => ({
+                  ...provided,
+                  color: "black",
+                  fontSize: "0.8rem",
+                }),
+                indicatorSeparator: (provided) => ({
+                  ...provided,
+                  display: "none",
+                }),
+                indicatorsContainer: (provided) => ({
+                  ...provided,
+                  padding: "0 0.5rem",
+                }),
+              }}
+              value={tags.map((tag) => ({
+                value: tag,
+                label: tag,
+              }))}
+            />
+          </div>
+          <div className={styles.inputWrapper}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="files"
+              multiple
+              onChange={(e) => {
+                console.log(e.target.files);
+                if (!e.target.files || !e.target.files.length) {
+                  return;
+                }
+
+                setFiles(...files, Array.from(e.target.files));
+              }}
+              // id={styles.fileInput}
+              style={{ display: "none" }}
+            />
             <button
               type="button"
-              style={{
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "#007bff",
-              }}
-              onClick={() => setPopoverOpen(true)}
-            >
-              Add Extra Field
-            </button>
-          </Popover.Trigger>
-          <Popover.Content
-            side="top"
-            style={{
-              backgroundColor: "white",
-              border: "1px solid #ccc",
-              padding: "0.5rem",
-            }}
-          >
-            <ul>
-              <li onClick={() => addNewField("text")}>Text</li>
-              <li onClick={() => addNewField("date")}>Date</li>
-            </ul>
-          </Popover.Content>
-        </Popover.Root>
-        <button onClick={handleSubmit}>Edit Product</button>
-      </div> */}
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div>
-          <label htmlFor="name">
-            Name<sup>*</sup>
-          </label>
-          <input
-            type="text"
-            name="name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Product Name"
-          />
-        </div>
-        <div>
-          <label htmlFor="purchaseDate">
-            Purchase Date<sup>*</sup>
-          </label>
-          <input
-            type="date"
-            name="purchaseDate"
-            required
-            value={purchaseDate}
-            onChange={(e) => setPurchaseDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="warrantyLength">
-            Warranty Length<sup>*</sup>
-          </label>
-          <div className={styles.warrantyInputs}>
-            <input
-              type="text"
-              name="warrantyLength"
-              required
-              value={warrantyLength}
-              onChange={(e) => setWarrantyLength(e.target.value)}
-              placeholder="Warranty Length"
-            />
-            <select
-              name="warrantyLengthUnit"
-              required
-              value={warrantyLengthUnit}
-              onChange={(e) => setWarrantyLengthUnit(e.target.value)}
-            >
-              <option value="days">Days</option>
-              <option value="months">Months</option>
-              <option value="years">Years</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label htmlFor="notes">Notes</label>
-          <textarea
-            name="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={6}
-          />
-        </div>
-        {extraFields.map((field, index) => (
-          <div key={`extraField-${field.type}-${field.title}`}>
-            <input
-              type="text"
-              name={`extraField-${field.type}-${field.title}`}
-              value={field.label}
-              onChange={(e) => {
-                const newFields = [...extraFields];
-                newFields[index].label = e.target.value;
-                setExtraFields(newFields);
-              }}
-              className={styles.fieldLabelInput}
-            />
-            <input
-              type={field.type}
-              name={`extraField-${field.type}-${field.title}`}
-              value={field.value}
-              onChange={(e) => {
-                const newFields = [...extraFields];
-                newFields[index].value = e.target.value;
-                setExtraFields(newFields);
-              }}
-              className={styles.fieldInput}
-            />
-          </div>
-        ))}
-        <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <Popover.Trigger asChild>
-            <button
-              type="button"
-              className={styles.popoverTrigger}
-              onClick={() => setPopoverOpen(true)}
+              onClick={() => fileInputRef.current.click()}
+              className={styles.fileButton}
             >
               <AddIcon />
-              Add Extra Field
-            </button>
-          </Popover.Trigger>
-          <Popover.Content side="top" className={styles.popoverContent}>
-            <button onClick={() => addNewField("text")}>Text</button>
-            <button onClick={() => addNewField("date")}>Date</button>
-          </Popover.Content>
-        </Popover.Root>
-        <div>
-          <label htmlFor="tags">Tags</label>
-          <CreateableSelect
-            isMulti
-            options={availableTags.map((tag) => ({
-              value: tag,
-              label: tag,
-            }))}
-            onChange={(tags) => {
-              setTags(tags.map((tag) => tag.value));
-            }}
-            name="tags"
-            styles={{
-              container: (provided) => ({
-                ...provided,
-                padding: "0.5rem",
-                borderRadius: "12px",
-                border: "1px solid #c7ccd1",
-              }),
-              control: (provided) => ({
-                ...provided,
-                border: "none",
-                ":hover": {
-                  borderColor: "none",
-                },
-              }),
-              group: (provided) => ({
-                ...provided,
-                padding: 0,
-              }),
-              groupHeading: () => ({
-                borderBottom: "1px solid #606265",
-                color: "#606265",
-                marginBottom: "0.25rem",
-                padding: "1rem 0 0 0.5rem",
-              }),
-              option: (provided, { isSelected }) => ({
-                ...provided,
-                color: "#232b2b",
-                display: "flex",
-                alignItems: "center",
-                ":hover": {
-                  backgroundColor: "#d1cbc9",
-                },
-                "> svg": {
-                  marginRight: "0.5rem",
-                },
-              }),
-              valueContainer: (provided) => ({
-                ...provided,
-                border: "none",
-              }),
-              singleValue: (provided, { data }) => ({
-                ...provided,
-                border: "none",
-              }),
-              dropdownIndicator: (provided) => ({
-                ...provided,
-                color: "#606265",
-              }),
-              placeholder: (provided) => ({
-                ...provided,
-                color: "black",
-                fontSize: "0.8rem",
-              }),
-              indicatorSeparator: (provided) => ({
-                ...provided,
-                display: "none",
-              }),
-              indicatorsContainer: (provided) => ({
-                ...provided,
-                padding: "0 0.5rem",
-              }),
-            }}
-          />
-        </div>
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            name="files"
-            multiple
-            onChange={(e) => {
-              console.log(e.target.files);
-              if (!e.target.files || !e.target.files.length) {
-                return;
-              }
-
-              setFiles(...files, Array.from(e.target.files));
-            }}
-            // id={styles.fileInput}
-            style={{ display: "none" }}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current.click()}
-            className={styles.fileButton}
-          >
-            <AddIcon />
-            Add Images or Files
-          </button>
-        </div>
-        {files.map((file) => (
-          <div key={file.name} className={styles.fileItem}>
-            <p>{file.name}</p>
-            <button onClick={() => setFiles(files.filter((f) => f !== file))}>
-              <DeleteIcon />
+              Add Images or Files
             </button>
           </div>
-        ))}
-      </form>
-
+          {files.map((file) => (
+            <div key={file.name} className={styles.fileItem}>
+              {file.url ? (
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.fileLink}
+                >
+                  {file.name}
+                </a>
+              ) : (
+                <p>{file.name}</p>
+              )}
+              <button onClick={() => setFiles(files.filter((f) => f !== file))}>
+                <DeleteIcon />
+              </button>
+            </div>
+          ))}
+        </form>
+      </div>
       <button
         onClick={handleSubmit}
         disabled={!name || !purchaseDate || !warrantyLength}

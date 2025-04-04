@@ -14,7 +14,8 @@
 
 .drawer {
   width: calc(80dvw - 2rem);
-  height: 100dvh;
+  max-width: 400px;
+  height: 100vh;
   background-color: #fff;
   position: fixed;
   top: 0;

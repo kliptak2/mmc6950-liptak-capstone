@@ -10,6 +10,39 @@
   margin-bottom: 0.5rem;
 }
 
+#previewImgWrapper {
+  width: 100%;
+  height: 100%;
+  max-height: 150px;
+  border-radius: 12px;
+  background-color: var(--pk-light-gray);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+#previewImg {
+  width: auto;
+  height: 100%;
+  max-height: 150px;
+  border-radius: 12px;
+}
+
+#previewPlaceholder {
+  width: 100%;
+  min-height: 150px;
+  background-color: var(--pk-light-gray);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
 #progressContainer p {
   margin: 0 0 0.25rem 0;
 }
@@ -26,14 +59,14 @@
 #progress[value]::-webkit-progress-bar {
   background-color: transparent;
   border-radius: 12px;
-  border: 1px solid var(--pk-teal);
+  border: 1px solid var(--pk-celtic-blue);
 }
 #progress[value]::-webkit-progress-value {
-  background-color: var(--pk-teal);
+  background-color: var(--pk-celtic-blue);
   border-radius: 12px;
 }
 #progress[value]::-moz-progress-bar {
-  background-color: var(--pk-teal);
+  background-color: var(--pk-celtic-blue);
   border-radius: 12px;
 }
 
@@ -134,4 +167,18 @@
 #deleteButton {
   background-color: var(--pk-dark-gray);
   color: white;
+}
+
+@media (min-width: 768px) {
+  #previewImgWrapper {
+    max-height: 200px;
+  }
+
+  #previewImg {
+    max-height: 200px;
+  }
+
+  #previewPlaceholder {
+    min-height: 200px;
+  }
 }

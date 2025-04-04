@@ -12,6 +12,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 3px 5px -1px,
+    rgba(0, 0, 0, 0.14) 0px 6px 10px 0px, rgba(0, 0, 0, 0.15) 0px 1px 18px 0px;
 }
 
 .addProductButton > svg {
@@ -22,9 +24,9 @@
 .controls {
   display: flex;
   align-items: stretch;
-  margin-bottom: 1rem;
+
   width: 95%;
-  margin: 0.5rem auto;
+  margin: 0.5rem auto 1rem auto;
 }
 
 .searchContainer {
@@ -137,11 +139,22 @@
   background-color: white;
   border-radius: 12px;
   border: 1px solid var(--pk-light-gray);
-  min-height: 100px;
+  height: 100px;
+}
+
+.previewImg {
+  width: 30%;
+  max-width: 100px;
+  flex-shrink: 0;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .imagePlaceholder {
   width: 30%;
+  max-width: 100px;
   flex-shrink: 0;
   background-color: var(--pk-light-gray);
   border-radius: 12px 0 0 12px;
@@ -182,14 +195,14 @@
 .productInfo progress[value]::-webkit-progress-bar {
   background-color: transparent;
   border-radius: 12px;
-  border: 1px solid var(--pk-teal);
+  border: 1px solid var(--pk-celtic-blue);
 }
 .productInfo progress[value]::-webkit-progress-value {
-  background-color: var(--pk-teal);
+  background-color: var(--pk-celtic-blue);
   border-radius: 12px;
 }
 .productInfo progress[value]::-moz-progress-bar {
-  background-color: var(--pk-teal);
+  background-color: var(--pk-celtic-blue);
   border-radius: 12px;
 }
 .tags {
@@ -204,4 +217,27 @@
   background-color: var(--pk-light-gray);
   padding: 0.25rem;
   border-radius: 50px;
+}
+
+@media (min-width: 768px) {
+  .controls {
+    margin: 1rem auto;
+  }
+  #searchInput {
+    font-size: 1.2rem;
+  }
+  .productCard {
+    height: 150px;
+  }
+
+  .previewImg {
+    max-width: 150px;
+  }
+  .imagePlaceholder {
+    max-width: 150px;
+  }
+  .productInfo {
+    padding: 1rem;
+    width: 100%;
+  }
 }

@@ -8,6 +8,8 @@ import { DateTime } from "luxon";
 import RemoveIcon from "@mui/icons-material/Remove";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import { getDownloadURL, ref, deleteObject } from "firebase/storage";
 
 const ProductDetails = ({ availableTags, productId }) => {
@@ -23,6 +25,7 @@ const ProductDetails = ({ availableTags, productId }) => {
   const setDrawerContent = useSystemStore((state) => state.setDrawerContent);
 
   const [fileList, setFileList] = useState([]);
+  const [previewImg, setPreviewImg] = useState(null);
 
   useEffect(() => {
     const getFiles = async () => {
@@ -44,7 +47,17 @@ const ProductDetails = ({ availableTags, productId }) => {
       setFileList(files);
     };
 
+    const getPreviewImg = async () => {
+      if (!product.previewImg) {
+        return;
+      }
+      const fileRef = ref(storage, `${user.uid}/${product.previewImg}`);
+      const url = await getDownloadURL(fileRef);
+      setPreviewImg({ name: product.previewImg, url });
+    };
+
     getFiles();
+    getPreviewImg();
   }, [productId]);
 
   const getRemainingWarrantyLength = (productId) => {
@@ -86,13 +99,13 @@ const ProductDetails = ({ availableTags, productId }) => {
 
     if (warrantyPercentComplete >= 1) {
       return {
-        percentComplete: 1,
+        percentComplete: 0,
         expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
       };
     }
 
     return {
-      percentComplete: warrantyPercentComplete,
+      percentComplete: 1 - warrantyPercentComplete,
       expirationDate: expirationDate.toFormat("yyyy-MM-dd"),
     };
   };
@@ -133,9 +146,23 @@ const ProductDetails = ({ availableTags, productId }) => {
   return (
     <div className={styles.container}>
       <h2 id={styles.productName}>{product.name}</h2>
+      {previewImg ? (
+        <div id={styles.previewImgWrapper}>
+          <img
+            id={styles.previewImg}
+            src={previewImg.url}
+            width={100}
+            height={100}
+          />
+        </div>
+      ) : (
+        <div id={styles.previewPlaceholder}>
+          <CameraAltOutlinedIcon fontSize="large" />
+        </div>
+      )}
       <div id={styles.progressContainer}>
         <p>
-          Warranty {percentComplete === 1 ? "expired" : "expires"}{" "}
+          Warranty {percentComplete === 0 ? "expired" : "expires"}{" "}
           {expirationDate}
         </p>
         <progress value={percentComplete} id={styles.progress} />

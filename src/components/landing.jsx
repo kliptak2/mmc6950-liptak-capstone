@@ -1,8 +1,8 @@
 import { useState } from "react";
 import SignUp from "./auth/signup";
 import SignIn from "./auth/signin";
-import LogoColor from "../assets/logo-color.svg";
 import styles from "../styles/landing.module.css";
+import LogoColor from "../assets/logo-tagline-color.svg";
 
 const Landing = () => {
   const [landingContent, setLandingContent] = useState("");
@@ -11,10 +11,7 @@ const Landing = () => {
       {!landingContent && (
         <>
           <div className={styles.logoContainer}>
-            <img src={LogoColor} alt="ProductKeeper Logo" />
-            <p className={styles.tagline}>
-              Minimal effort. Maximum Organization.
-            </p>
+            <img width={375} src={LogoColor} alt="ProductKeeper Logo" />
           </div>
           <div className={styles.buttonContainer}>
             <button
@@ -25,7 +22,6 @@ const Landing = () => {
             </button>
             <button
               id={styles.signup}
-              // disabled
               onClick={() => setLandingContent("signup")}
             >
               Sign Up
@@ -39,8 +35,6 @@ const Landing = () => {
       {landingContent === "signin" && (
         <SignIn goBack={() => setLandingContent("")} />
       )}
-      {/* <SignUp />
-      <SignIn /> */}
     </div>
   );
 };

@@ -20,9 +20,13 @@ function App() {
 
   return (
     <>
-      <Navigation />
       {!user && <Landing />}
-      {!!user && <Products />}
+      {!!user && (
+        <>
+          <Navigation />
+          <Products />
+        </>
+      )}
 
       <Modal />
       <Drawer />
