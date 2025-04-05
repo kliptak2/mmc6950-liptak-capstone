@@ -3,7 +3,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import Navigation from "./components/navigation";
 import Landing from "./components/landing";
 import Products from "./components/products/products";
-import Modal from "./components/modal";
 import Drawer from "./components/drawer";
 import useUserStore from "./state/user";
 import { FirebaseContext } from "./context/context";
@@ -28,7 +27,6 @@ function App() {
         </>
       )}
 
-      <Modal />
       <Drawer />
     </>
   );
