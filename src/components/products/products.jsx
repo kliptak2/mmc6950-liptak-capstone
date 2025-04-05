@@ -103,7 +103,7 @@ const Products = () => {
             return {
               ...doc.data(),
               id: doc.id,
-              previewImg: imgUrl,
+              previewImgUrl: imgUrl,
             };
           })
         );
@@ -269,7 +269,7 @@ const Products = () => {
   };
 
   return (
-    <div>
+    <div className={styles.container}>
       <button
         onClick={() => {
           setDrawerOpen(true);
@@ -365,7 +365,10 @@ const Products = () => {
               }}
             >
               {product.previewImg ? (
-                <img className={styles.previewImg} src={product.previewImg} />
+                <img
+                  className={styles.previewImg}
+                  src={product.previewImgUrl}
+                />
               ) : (
                 <div className={styles.imagePlaceholder}>
                   <CameraAltOutlinedIcon fontSize="large" />

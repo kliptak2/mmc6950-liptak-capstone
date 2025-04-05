@@ -14,20 +14,22 @@ const Navigation = () => {
 
   return (
     <nav className={clsx(styles.navigation, !!user && styles.loggedIn)}>
-      <h1>ProductKeeper</h1>
+      <div className={styles.content}>
+        <h1>ProductKeeper</h1>
 
-      {user && (
-        <button
-          className={styles.menuButton}
-          onClick={() => {
-            auth.signOut();
-            clearProducts();
-            setUser(null);
-          }}
-        >
-          <LogoutIcon fontSize="large" />
-        </button>
-      )}
+        {user && (
+          <button
+            className={styles.menuButton}
+            onClick={() => {
+              auth.signOut();
+              clearProducts();
+              setUser(null);
+            }}
+          >
+            <LogoutIcon fontSize="large" />
+          </button>
+        )}
+      </div>
     </nav>
   );
 };

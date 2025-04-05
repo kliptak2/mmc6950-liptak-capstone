@@ -48,9 +48,18 @@ const ProductDetails = ({ availableTags, productId }) => {
     };
 
     const getPreviewImg = async () => {
+      console.log(product);
+      // Exit early if no preview image is set
       if (!product.previewImg) {
         return;
       }
+
+      // If we already fetched the image url on the main page, use it
+      if (product.previewImgUrl) {
+        setPreviewImg({ name: product.previewImg, url: product.previewImgUrl });
+        return;
+      }
+
       const fileRef = ref(storage, `${user.uid}/${product.previewImg}`);
       const url = await getDownloadURL(fileRef);
       setPreviewImg({ name: product.previewImg, url });

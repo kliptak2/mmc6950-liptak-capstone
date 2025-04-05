@@ -49,19 +49,31 @@ const EditProductForm = ({ availableTags, product }) => {
       setWarrantyLength(product.warrantyLength);
       setWarrantyLengthUnit(product.warrantyLengthUnit);
 
-      if (!product.files?.length) {
-        return;
+      if (product.files?.length) {
+        const existingFiles = await Promise.all(
+          product.files.map(async (file) => {
+            const storageRef = ref(storage, `${user.uid}/${file}`);
+            const url = await getDownloadURL(storageRef);
+            return { name: file, url };
+          })
+        );
+
+        setFiles(existingFiles);
       }
 
-      const existingFiles = await Promise.all(
-        product.files.map(async (file) => {
-          const storageRef = ref(storage, `${user.uid}/${file}`);
-          const url = await getDownloadURL(storageRef);
-          return { name: file, url };
-        })
-      );
+      if (product.previewImg) {
+        if (product.previewImgUrl) {
+          setPreviewImg({
+            name: product.previewImg,
+            url: product.previewImgUrl,
+          });
+          return;
+        }
 
-      setFiles(existingFiles);
+        const storageRef = ref(storage, `${user.uid}/${product.previewImg}`);
+        const url = await getDownloadURL(storageRef);
+        setPreviewImg({ name: product.previewImg, url });
+      }
     };
 
     initialize();
