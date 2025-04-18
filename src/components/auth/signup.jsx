@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useContext, useRef, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -20,8 +20,15 @@ const SignUp = (props) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const ignoreClickRef = useRef(false);
+
   const signUp = async () => {
     try {
+      if (ignoreClickRef.current) {
+        return;
+      }
+      ignoreClickRef.current = true;
+
       const createResponse = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -47,6 +54,8 @@ const SignUp = (props) => {
       });
     } catch (error) {
       console.error(error);
+    } finally {
+      ignoreClickRef.current = false;
     }
   };
 

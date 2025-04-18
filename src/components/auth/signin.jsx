@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useContext, useRef, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { FirebaseContext } from "../../context/context";
@@ -15,8 +15,15 @@ const SignIn = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const ignoreClickRef = useRef(false);
+
   const signIn = async () => {
     try {
+      if (ignoreClickRef.current) {
+        return;
+      }
+      ignoreClickRef.current = true;
+
       const signinResponse = await signInWithEmailAndPassword(
         auth,
         email,
@@ -41,6 +48,8 @@ const SignIn = (props) => {
       });
     } catch (error) {
       console.error(error);
+    } finally {
+      ignoreClickRef.current = false;
     }
   };
 

@@ -5,7 +5,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import AddIcon from "@mui/icons-material/Add";
 import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import { FirebaseContext } from "../../context/context";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import {
   ref,
   uploadBytes,
@@ -21,8 +21,8 @@ import styles from "../../styles/edit-product.module.css";
 const EditProductForm = ({ availableTags, product }) => {
   const { db, storage } = useContext(FirebaseContext);
 
-  const setModalOpen = useSystemStore((state) => state.setModalOpen);
-  const setModalContent = useSystemStore((state) => state.setModalContent);
+  const setDrawerOpen = useSystemStore((state) => state.setDrawerOpen);
+  const setDrawerContent = useSystemStore((state) => state.setDrawerContent);
 
   const user = useUserStore((state) => state.user);
 
@@ -34,10 +34,11 @@ const EditProductForm = ({ availableTags, product }) => {
   const [previewImg, setPreviewImg] = useState(null);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
-  const [warrantyLength, setWarrantyLength] = useState("");
+  const [warrantyLength, setWarrantyLength] = useState(0);
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("");
 
   const fileInputRef = useRef(null);
+  const ignoreClickRef = useRef(false);
   const previewImgInputRef = useRef(null);
 
   useEffect(() => {
@@ -99,6 +100,11 @@ const EditProductForm = ({ availableTags, product }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (ignoreClickRef.current) {
+      return;
+    }
+    ignoreClickRef.current = true;
+
     console.log("submitting");
 
     const filesToDelete = product.files.filter(
@@ -145,6 +151,7 @@ const EditProductForm = ({ availableTags, product }) => {
       files: finalFilenames,
       name,
       notes,
+      previewImg: previewImgName,
       purchaseDate,
       tags,
       warrantyLength,
@@ -160,8 +167,8 @@ const EditProductForm = ({ availableTags, product }) => {
       docBody
     );
 
-    setModalOpen(false);
-    setModalContent({ component: "", params: null });
+    setDrawerOpen(false);
+    setDrawerContent({ component: "", params: null });
   };
 
   const addNewField = (type) => {
@@ -258,7 +265,7 @@ const EditProductForm = ({ availableTags, product }) => {
             </label>
             <div className={styles.warrantyInputs}>
               <input
-                type="text"
+                type="number"
                 name="warrantyLength"
                 required
                 value={warrantyLength}

@@ -11,6 +11,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem 0;
+}
+
+.logo {
+  height: 2.25rem;
 }
 
 .menuButton {
@@ -20,4 +25,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@media (min-width: 768) {
+  .logo {
+    height: 3rem;
+  }
 }

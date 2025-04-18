@@ -27,7 +27,7 @@ const Drawer = () => {
     EDIT_PRODUCT: EditProductForm,
     PRODUCT_DETAILS: ProductDetails,
   };
-  const RenderComponent = COMPONENT_MAP[drawerContent?.component || ""];
+  const RenderComponent = COMPONENT_MAP[drawerContent.component];
 
   return (
     <AnimatePresence>
@@ -51,9 +51,7 @@ const Drawer = () => {
                 <CloseOutlinedIcon fontSize="large" />
               </button>
             </div>
-            {!!RenderComponent && (
-              <RenderComponent {...drawerContent?.params} />
-            )}
+            {!!RenderComponent && <RenderComponent {...drawerContent.params} />}
           </motion.div>
           <motion.div
             initial={{ opacity: 0 }}

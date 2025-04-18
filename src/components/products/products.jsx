@@ -279,6 +279,8 @@ const Products = () => {
           });
         }}
         className={styles.addProductButton}
+        name="addProductButton"
+        aria-label="Add Product"
       >
         <AddIcon />
       </button>
@@ -297,6 +299,7 @@ const Products = () => {
             }}
             value={searchTerm}
             id={styles.searchInput}
+            name="search"
           />
           <button
             disabled={!searchTerm}
@@ -312,7 +315,7 @@ const Products = () => {
         </div>
         <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
           <Popover.Trigger asChild>
-            <button className={styles.sortButton}>
+            <button className={styles.sortButton} aria-label="Sort Products">
               <SortIcon fontSize="large" />
             </button>
           </Popover.Trigger>
@@ -368,6 +371,7 @@ const Products = () => {
                 <img
                   className={styles.previewImg}
                   src={product.previewImgUrl}
+                  alt={`Preview image for ${product.name}`}
                 />
               ) : (
                 <div className={styles.imagePlaceholder}>

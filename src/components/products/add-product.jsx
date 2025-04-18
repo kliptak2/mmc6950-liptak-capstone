@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useRef } from "react";
 import CreateableSelect from "react-select/creatable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -28,14 +28,20 @@ const AddProductForm = ({ availableTags }) => {
   const [previewImg, setPreviewImg] = useState(null);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
-  const [warrantyLength, setWarrantyLength] = useState("");
+  const [warrantyLength, setWarrantyLength] = useState(0);
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("days");
 
   const fileInputRef = useRef(null);
+  const ignoreClickRef = useRef(false);
   const previewImgInputRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (ignoreClickRef.current) {
+      return;
+    }
+    ignoreClickRef.current = true;
 
     console.log("submitting");
 
@@ -175,7 +181,7 @@ const AddProductForm = ({ availableTags }) => {
             </label>
             <div className={styles.warrantyInputs}>
               <input
-                type="text"
+                type="number"
                 name="warrantyLength"
                 required
                 value={warrantyLength}
