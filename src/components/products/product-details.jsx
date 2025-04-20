@@ -120,16 +120,18 @@ const ProductDetails = ({ availableTags, productId }) => {
   };
 
   const deleteProduct = async () => {
-    const files = products.find((product) => product.id === id).files;
+    const files = products.find((product) => product.id === productId).files;
 
-    await Promise.all(
-      files.map(async (file) => {
-        const storageRef = ref(storage, `${user.uid}/${file}`);
-        await deleteObject(storageRef);
-      })
-    );
+    if (files?.length) {
+      await Promise.all(
+        files.map(async (file) => {
+          const storageRef = ref(storage, `${user.uid}/${file}`);
+          await deleteObject(storageRef);
+        })
+      );
+    }
 
-    await deleteDoc(doc(db, `users/${user.uid}/products/${id}`));
+    await deleteDoc(doc(db, `users/${user.uid}/products/${productId}`));
 
     setDrawerOpen(false);
     setDrawerContent({ component: "", params: null });

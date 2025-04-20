@@ -227,6 +227,10 @@ const Products = () => {
   const getRemainingWarrantyLength = (productId) => {
     const product = products.find((product) => product.id === productId);
 
+    if (!product) {
+      return null;
+    }
+
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const purchaseDate = product.purchaseDate;
