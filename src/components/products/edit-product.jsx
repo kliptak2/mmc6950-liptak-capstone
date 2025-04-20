@@ -138,25 +138,30 @@ const EditProductForm = ({ availableTags, product }) => {
       ...fileNames,
     ];
 
-    let previewImgName = null;
+    // let previewImgName = null;
 
-    if (previewImg.file) {
-      const storageRef = ref(storage, `${user.uid}/${previewImg.file.name}`);
-      await uploadBytes(storageRef, previewImg.file);
-      previewImgName = previewImg.file.name;
-    }
+    // if (previewImg.file) {
+    //   const storageRef = ref(storage, `${user.uid}/${previewImg.file.name}`);
+    //   await uploadBytes(storageRef, previewImg.file);
+    //   previewImgName = previewImg.file.name;
+    // }
 
     const docBody = {
       createdAt: serverTimestamp(),
       files: finalFilenames,
       name,
       notes,
-      previewImg: previewImgName,
       purchaseDate,
       tags,
       warrantyLength,
       warrantyLengthUnit,
     };
+
+    if (previewImg.file) {
+      const storageRef = ref(storage, `${user.uid}/${previewImg.file.name}`);
+      await uploadBytes(storageRef, previewImg.file);
+      docBody.previewImg = previewImg.file.name;
+    }
 
     if (extraFields.length) {
       docBody.extraFields = extraFields;
