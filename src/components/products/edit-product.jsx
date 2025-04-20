@@ -35,7 +35,7 @@ const EditProductForm = ({ availableTags, product }) => {
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
   const [warrantyLength, setWarrantyLength] = useState(0);
-  const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("");
+  const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("months");
 
   const fileInputRef = useRef(null);
   const ignoreClickRef = useRef(false);

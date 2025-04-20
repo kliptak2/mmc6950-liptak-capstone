@@ -17,7 +17,6 @@ const ProductDetails = ({ availableTags, productId }) => {
 
   const products = useUserStore((state) => state.products);
   const product = products.find((p) => p.id === productId);
-  console.log(product);
 
   const user = useUserStore((state) => state.user);
 
@@ -69,15 +68,28 @@ const ProductDetails = ({ availableTags, productId }) => {
     getPreviewImg();
   }, [productId]);
 
-  const getRemainingWarrantyLength = (productId) => {
+  if (!product) {
+    return null;
+  }
+
+  const getRemainingWarrantyLength = () => {
+    if (!product) {
+      return {
+        percentComplete: 0,
+        expirationDate: "",
+      };
+    }
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const purchaseDate = product.purchaseDate;
-    const warrantyLength = product.warrantyLength;
-    const warrantyLengthUnit = product.warrantyLengthUnit;
+    const purchaseDate = product?.purchaseDate;
+    const warrantyLength = product?.warrantyLength;
+    const warrantyLengthUnit = product?.warrantyLengthUnit;
 
     if (!purchaseDate || !warrantyLength || !warrantyLengthUnit) {
-      return null;
+      return {
+        percentComplete: 0,
+        expirationDate: "",
+      };
     }
 
     console.log(purchaseDate, warrantyLength, warrantyLengthUnit);

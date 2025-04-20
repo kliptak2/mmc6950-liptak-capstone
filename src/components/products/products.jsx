@@ -228,17 +228,23 @@ const Products = () => {
     const product = products.find((product) => product.id === productId);
 
     if (!product) {
-      return null;
+      return {
+        percentComplete: 0,
+        expirationDate: "",
+      };
     }
 
     const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const purchaseDate = product.purchaseDate;
-    const warrantyLength = product.warrantyLength;
-    const warrantyLengthUnit = product.warrantyLengthUnit;
+    const purchaseDate = product?.purchaseDate;
+    const warrantyLength = product?.warrantyLength;
+    const warrantyLengthUnit = product?.warrantyLengthUnit;
 
     if (!purchaseDate || !warrantyLength || !warrantyLengthUnit) {
-      return null;
+      return {
+        percentComplete: 0,
+        expirationDate: "",
+      };
     }
 
     const dtPurchase = DateTime.fromISO(`${purchaseDate}T00:00:00`, {
