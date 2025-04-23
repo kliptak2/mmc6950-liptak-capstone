@@ -1,24 +1,22 @@
 # ProductKeeper
 
-ProductKeeper is an easy-to-use app that helps you keep track of important product information, including serial numbers, receipts, warranty expiration dates, and user manuals.
+ProductKeeper is an easy-to-use app that helps you keep track of important product information, including receipts, warranty expiration dates, and user manuals.
 
 ## Features
 
-- **Track Warranty Expiration:** Easily track and set reminders for warranty expiration dates.
-- **Store Serial Numbers & Lot Numbers:** Keep a record of product details for quick access.
-- **Upload Receipts & Manuals:** Store product receipts and user manuals directly in the app for easy retrieval.
+- **Product Search & Sort:** Multiple ways to find products for when you forget specific details.
+- **Warranty Tracking:** Easily track warranty expirations with visible status bars.
+- **Custom Fields & Tags:** Capture as much or as little information as you want with customizeable entries.
 
 ## Installation
 
-1. Download the app from the [official website](#).
-2. Follow the installation instructions based on your device.
+1. Access the app via [https://kliptak2.github.io/mmc6950-liptak-capstone/](https://kliptak2.github.io/mmc6950-liptak-capstone/).
 
 ## Usage
 
 1. Open the app and create an account.
-2. Add your products by entering their details (warranty date, serial number, etc.).
+2. Add your products by entering their details (picture, purchase date, warranty length, etc.).
 3. Upload receipts and user manuals for quick reference.
-4. Set notifications for warranty expiration or other important dates.
 
 ## License
 
