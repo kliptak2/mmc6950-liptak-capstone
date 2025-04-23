@@ -28,7 +28,7 @@ const AddProductForm = ({ availableTags }) => {
   const [previewImg, setPreviewImg] = useState(null);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
-  const [warrantyLength, setWarrantyLength] = useState(0);
+  const [warrantyLength, setWarrantyLength] = useState("0");
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("months");
 
   const fileInputRef = useRef(null);
@@ -186,6 +186,7 @@ const AddProductForm = ({ availableTags }) => {
                 required
                 value={warrantyLength}
                 onChange={(e) => setWarrantyLength(e.target.value)}
+                min={0}
               />
               <select
                 name="warrantyLengthUnit"

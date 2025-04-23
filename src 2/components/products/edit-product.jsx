@@ -34,7 +34,7 @@ const EditProductForm = ({ availableTags, product }) => {
   const [previewImg, setPreviewImg] = useState(null);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [tags, setTags] = useState([]);
-  const [warrantyLength, setWarrantyLength] = useState(0);
+  const [warrantyLength, setWarrantyLength] = useState(1);
   const [warrantyLengthUnit, setWarrantyLengthUnit] = useState("months");
 
   const fileInputRef = useRef(null);
@@ -49,6 +49,10 @@ const EditProductForm = ({ availableTags, product }) => {
       setTags(product.tags);
       setWarrantyLength(product.warrantyLength);
       setWarrantyLengthUnit(product.warrantyLengthUnit);
+
+      if (product.extraFields?.length) {
+        setExtraFields(product.extraFields);
+      }
 
       if (product.files?.length) {
         const existingFiles = await Promise.all(
@@ -79,23 +83,6 @@ const EditProductForm = ({ availableTags, product }) => {
 
     initialize();
   }, [product]);
-
-  useEffect(() => {
-    const fieldLabelsAndCounts = extraFields.reduce((acc, field) => {
-      if (acc[field.label]) {
-        acc[field.label]++;
-      } else {
-        acc[field.label] = 1;
-      }
-      return acc;
-    }, {});
-
-    for (const key in fieldLabelsAndCounts) {
-      if (fieldLabelsAndCounts[key] > 1) {
-        setErrors([...errors, key]);
-      }
-    }
-  }, [extraFields]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,7 +134,6 @@ const EditProductForm = ({ availableTags, product }) => {
     // }
 
     const docBody = {
-      createdAt: serverTimestamp(),
       files: finalFilenames,
       name,
       notes,
@@ -157,7 +143,7 @@ const EditProductForm = ({ availableTags, product }) => {
       warrantyLengthUnit,
     };
 
-    if (previewImg.file) {
+    if (previewImg?.file) {
       const storageRef = ref(storage, `${user.uid}/${previewImg.file.name}`);
       await uploadBytes(storageRef, previewImg.file);
       docBody.previewImg = previewImg.file.name;
@@ -309,7 +295,11 @@ const EditProductForm = ({ availableTags, product }) => {
                 value={field.label}
                 onChange={(e) => {
                   const newFields = [...extraFields];
-                  newFields[index].label = e.target.value;
+
+                  newFields[index] = {
+                    ...newFields[index],
+                    label: e.target.value,
+                  };
                   setExtraFields(newFields);
                 }}
                 className={styles.fieldLabelInput}
@@ -320,7 +310,10 @@ const EditProductForm = ({ availableTags, product }) => {
                 value={field.value}
                 onChange={(e) => {
                   const newFields = [...extraFields];
-                  newFields[index].value = e.target.value;
+                  newFields[index] = {
+                    ...newFields[index],
+                    value: e.target.value,
+                  };
                   setExtraFields(newFields);
                 }}
                 className={styles.fieldInput}

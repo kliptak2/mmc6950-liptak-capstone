@@ -140,7 +140,7 @@
   flex-direction: column;
   width: 95%;
   gap: 0.75rem;
-  margin-bottom: 4rem;
+  margin: 0 auto 4rem auto;
   container-type: inline-size;
   container-name: productList;
 }
@@ -151,7 +151,7 @@
   background-color: white;
   border-radius: 12px;
   border: 1px solid var(--pk-light-gray);
-  height: 100px;
+  height: 110px;
 }
 
 .previewImg {
@@ -220,8 +220,10 @@
 .tags {
   margin-top: 0.5rem;
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem;
+  min-height: 1.5rem;
 }
 
 .tag {

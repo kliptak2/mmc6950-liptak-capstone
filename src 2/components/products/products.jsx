@@ -158,7 +158,12 @@ const Products = () => {
   const searchProducts = (searchTerm) => {
     setSearchTerm(searchTerm);
     const filteredLocalProducts = [...products].filter((product) => {
-      return product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return (
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        !!product.tags?.find((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
     });
 
     switch (sortOption) {

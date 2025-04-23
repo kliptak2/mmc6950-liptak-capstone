@@ -8,6 +8,7 @@ import { DateTime } from "luxon";
 import RemoveIcon from "@mui/icons-material/Remove";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
 import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import { getDownloadURL, ref, deleteObject } from "firebase/storage";
@@ -259,10 +260,38 @@ const ProductDetails = ({ availableTags, productId }) => {
           <EditIcon />
           Edit
         </button>
-        <button onClick={deleteProduct} id={styles.deleteButton}>
-          <DeleteIcon />
-          Delete
-        </button>
+        <AlertDialog.Root>
+          <AlertDialog.Trigger asChild>
+            <button id={styles.deleteButton}>
+              <DeleteIcon />
+              Delete
+            </button>
+          </AlertDialog.Trigger>
+          <AlertDialog.Portal>
+            <AlertDialog.Overlay className={styles.overlay} />
+            <AlertDialog.Content className={styles.alertContent}>
+              <AlertDialog.Title className={styles.alertTitle}>
+                Are you sure?
+              </AlertDialog.Title>
+              <AlertDialog.Description className={styles.alertDescription}>
+                This action cannot be undone.
+              </AlertDialog.Description>
+              <div className={styles.alertActions}>
+                <AlertDialog.Cancel asChild>
+                  <button id={styles.cancelButton}>Cancel</button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                  <button
+                    onClick={deleteProduct}
+                    id={styles.confirmDeleteButton}
+                  >
+                    Delete
+                  </button>
+                </AlertDialog.Action>
+              </div>
+            </AlertDialog.Content>
+          </AlertDialog.Portal>
+        </AlertDialog.Root>
       </div>
     </div>
   );
